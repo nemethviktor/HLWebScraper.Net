@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration(configuration: "")]
 [assembly: AssemblyCompany(company: "Viktor Nemeth")]
 [assembly: AssemblyProduct(product: "HL Web Scraper/Parser")]
-[assembly: AssemblyCopyright(copyright: "Viktor Nemeth - GPLv3 - 2024")]
+[assembly: AssemblyCopyright(copyright: "Viktor Nemeth - Apache 2.0 - 2024")]
 [assembly: AssemblyTrademark(trademark: "")]
 [assembly: AssemblyCulture(culture: "")]
 

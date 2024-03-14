@@ -498,7 +498,8 @@ internal static class TagsToModelValueTransformations
             {
                 marketCap *= Math.Pow(x: 10, y: 6 + currPowerAdd);
             }
-            else if (marketCapStr.Contains(value: ","))
+            else if (marketCapStr.Contains(value: ",") ||
+                     marketCap < 1000)
             {
                 // nothing. 
             }

@@ -1,5 +1,4 @@
-﻿
-# Welcome to the (totally unofficial) Hargeaves Lansdown Web Scraper/Parser
+﻿# Welcome to the (totally unofficial) Hargeaves Lansdown Web Scraper/Parser
 
 Most of all please note that this product is neither affiliated with nor endorsed by HL. That's also to say I didn't include their logo in the About box as I presume that's a trademarked thing. 
 The usual caveats apply: I take no responsibility for whatever outcome you encounter through using this app and none of what's presented in the app is financial advice.
@@ -35,8 +34,17 @@ As mentioned above the app doesn't pull Funds. The main reason behind this is th
 On that note the app can only collect stuff that's either visibly available on the site or is at least in the source code of the HTML data - that is to say I don't mind entertaining feature requests but I can only pull what's "there". Also note some of the results that are returned can be blanks or "n/a". Again that's just what the website contains.
 
 ## System Requirements
+
 - Requires Windows 10. Lower versions kept throwing SSL errors so I disabled Windows 7/8.x, sorry. I think they're pretty uncommon by this point anyway.
 - Requires .NET Windows Desktop Runtime v8 - Windows should trigger a manual install request if missing, it's a file download straight from Microsoft's website.
+
+### Performance
+
+- The whole end-to-end process takes a fair bit of time so be patient. In my one test run the whole thing took in the vicinity of short of an hour.
+- The app uses a library (`CompressedMemoryCache.cs`) - the licence of that is contained in the file and was built by Gustavo Augusto Hennig (it's APACHE 2.0 btw)
+    - It's necessary to use compression on the html pages because storing that many (read: tens of thousands) pages at 200-400kbytes each will eat up memory in no time. My initial tests of letters A-C made the app consume around 5GB RAM w/o compression and sub-1GB w/ compression.
+- I did some testing on what I deem is a 'normal' performance laptop, ie a Ryzen 7 PRO 5850U [8x 4370 MHz] w/ 32 GB RAM - the Release (non-Debug that is) version of the app peaked at 25% CPU and (again) around sub-1GB RAM.
+- The output CSV file is around 3MB, nothing epic.
 
 ## Download & Install (Windows 10+ only)
 
@@ -63,7 +71,6 @@ There's no installation file per se. Unzip and run the exe.
 
 ### Things to Note
 
-- The whole end-to-end process takes a fair bit of time so be patient.
 - Avast antivirus is a total f...ing idiot and flags the app as suspicious. While I'd love to point out that the source code is public and everyone can check it the TLDR is that there's nothing suspcious about the app.
 - The CancellationToken (aka Stop Button) logic is a bit patchy I think. Might be imperfect.
 - In case you build upon the output of this app (ie you feed the CSV into whatever) I'd suggest you base your ETL on column names and not column order as I don't promise that latter will never change.
@@ -72,8 +79,6 @@ There's no installation file per se. Unzip and run the exe.
     - I didn't really bother bringing in external libraries for parsing or making the code particularly neat. I had a look at HTMLAgility but in reality fishing around XPath is a pain in the backside when I already have my somewhat loop-ing code from VBA cast to C# by GPT.
     - The version number is seemingly odd: we start with v4 because the previous ones were my own VBA stuff
 - There's some semblance of a Dark Mode option. WinForms doesn't actually support DM natively and can't replicate it like-for-like so it's as good as it gets for now.
-- The app uses a library (`CompressedMemoryCache.cs`) - the licence of that is contained in the file and was built by Gustavo Augusto Hennig (it's APACHE 2.0 btw)
-    - It's necessary to use compression on the html pages because storing that many (read: tens of thousands) pages at 200-400kbytes each will eat up memory in no time. My initial tests of letters A-C made the app consume around 5GB RAM w/o compression and sub-1GB w/ compression.
 
 ## Pull Requests
 

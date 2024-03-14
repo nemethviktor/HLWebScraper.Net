@@ -214,8 +214,8 @@ public partial class FrmMainApp : Form
                 {
                     string href = linkNode.GetAttributeValue(name: "href", def: "");
                 #if DEBUG
-                    //List<string> listOfURLsToDebug = new List<string>
-                    //    { "https://www.hl.co.uk/shares/shares-search-results/a/abrdn-physical-platinum-shares-etf" };
+                    //List<string> listOfURLsToDebug = new()
+                    //    { "https://www.hl.co.uk/shares/shares-search-results/l/liberty-global-holdings-ltd-usd0.01-c" };
                     List<string> listOfURLsToDebug = new();
                     if (href.Contains(value: "/shares/shares-search-results/" + alphabetChar + "/") &&
                         (listOfURLsToDebug.Any(predicate: container => href.Contains(value: container)) ||
@@ -247,29 +247,57 @@ public partial class FrmMainApp : Form
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
                 logMessageType: LogMessageTypes.Start);
 
+            // Chunk size for processing tasks
+            const int chunkSize = 50;
+
             // Create a list to hold the tasks
             List<Task> tasks = new();
 
-            // Loop through each URL and start scraping
-            foreach (string url in urls)
+            // Iterate over the URLs in chunks
+            for (int i = 0; i < urls.Count; i += chunkSize)
             {
-                Application.DoEvents();
+                // Get the chunk of URLs
+                IEnumerable<string> chunk = urls.Skip(count: i).Take(count: chunkSize);
 
-                // Check if cancellation has been requested
-                cancellationToken.ThrowIfCancellationRequested();
+                // Create a list to hold the tasks for this chunk
+                List<Task> chunkTasks = new();
 
-                // Construct the URL with "/company-information" appended
-                string companyInfoUrl = url + "/company-information";
+                // Create a new HttpClient for this chunk
+                using HttpClient httpClient = new();
 
-                // Add tasks to scrape the main URL and company info URL
-                tasks.Add(item: GetHtmlAsync(url: url, formInstance: formInstance,
-                    cancellationToken: cancellationToken));
-                tasks.Add(item: GetHtmlAsync(url: companyInfoUrl, formInstance: formInstance,
-                    cancellationToken: cancellationToken));
+                // Loop through each URL in the chunk and start scraping
+                foreach (string url in chunk)
+                {
+                    // Check if cancellation has been requested
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // Construct the URL with "/company-information" appended
+                    string companyInfoUrl = url + "/company-information";
+
+                    // Add tasks to scrape the main URL and company info URL
+                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: url,
+                        formInstance: formInstance, cancellationToken: cancellationToken));
+                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: companyInfoUrl,
+                        formInstance: formInstance, cancellationToken: cancellationToken));
+                }
+
+                // Add chunk tasks to the main tasks list
+                tasks.AddRange(collection: chunkTasks);
+
+                // Wait for the chunk tasks to complete or cancellation requested
+                await Task.WhenAll(tasks: chunkTasks);
+
+                // Dispose of the HttpClient to close connections and release resources
+                httpClient.Dispose();
+
+                // Break loop if cancellation requested
+                if (cancellationToken.IsCancellationRequested)
+                    break;
             }
 
-            // Wait for all tasks to complete or cancellation requested
-            await Task.WhenAll(tasks: tasks);
+            // Scraping completed
+            AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
+                logMessageType: LogMessageTypes.Done);
         }
         catch (Exception ex) when (ex is OperationCanceledException || ex is TaskCanceledException)
         {
@@ -277,53 +305,36 @@ public partial class FrmMainApp : Form
             AppendLogWindowText(tbx: formInstance.tbx_Log,
                 appendText: "Scraping of web pages was cancelled. Process halted.",
                 logMessageType: LogMessageTypes.Info);
-            return;
         }
-
-        // Scraping completed
-        AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
-            logMessageType: LogMessageTypes.Done);
     }
 
-    private static async Task GetHtmlAsync(string url, FrmMainApp formInstance, CancellationToken cancellationToken)
+    private static async Task GetHtmlAsyncWithClient(HttpClient httpClient, string url, FrmMainApp formInstance,
+        CancellationToken cancellationToken)
     {
-        // Check if cancellation has been requested before making the request
+        // Check if cancellation has been requested
         cancellationToken.ThrowIfCancellationRequested();
 
-        using HttpClient client = new();
-        try
-        {
-            HttpResponseMessage response = await client.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-            response.EnsureSuccessStatusCode();
-            string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+        // Make the HTTP request
+        HttpResponseMessage response = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+        string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
 
-            if (!url.Contains(value: "company-info"))
-                // Store the content in the dictionary
-                urlAndHtmlContentHashtable.AddOrUpdate(key: url, value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
+        // Process the HTML content
+        // Page
+        if (!url.Contains(value: "company-info"))
+            urlAndHtmlContentHashtable.AddOrUpdate(key: url,
+                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
                     text: ReturnPageText(
                         HTMLTextInHtmlContentHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
-            else
-                // Do the same for company info
-                urlAndCompanyInfoHashtable.AddOrUpdate(key: url, value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
+        // Company
+        else
+            urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
+                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
                     text: ReturnCompanyPageText(
                         HTMLTextInCompanyInfoHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
 
-            IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
-        }
-
-        catch (Exception ex)
-        {
-            if
-                (ex is OperationCanceledException ||
-                 ex is TaskCanceledException)
-                // Operation was cancelled
-                AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: $"Fetching URL '{url}' was cancelled.");
-            else if (ex is HttpRequestException)
-                // Log error
-                IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: false,
-                    errorMsg: ex.Message);
-        }
+        IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
     }
+
 
     /// <summary>
     ///     Creates the SEDOLs. Technically the primary key is the URL at the stage of creation.
