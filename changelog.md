@@ -1,6 +1,6 @@
-# GeoTagNinja Changelog
+# HLWebscraper.Net Changelog
 
-**Build 88xx [202403xx] ** 
+**Build 8840 [20240315] ** 
 - NEW & UPDATED:
   - Added logic to allow for limited selection of scraping targets
   - Added an ETF-only filter

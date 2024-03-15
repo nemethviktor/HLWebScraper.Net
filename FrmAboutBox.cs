@@ -77,7 +77,8 @@ internal partial class FrmAboutBox : Form
     private void rtb_AboutBox_LinkClicked(object sender,
         LinkClickedEventArgs e)
     {
-        Process.Start(fileName: e.LinkText);
+        Debug.Assert(condition: e.LinkText != null, message: "e.LinkText != null");
+        Process.Start(startInfo: new ProcessStartInfo { FileName = e.LinkText, UseShellExecute = true });
     }
 
 
