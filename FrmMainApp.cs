@@ -1051,30 +1051,56 @@ public partial class FrmMainApp : Form
 
         string nowDTStr = DateTime.Now.ToString(format: "yyyyMMdd_HHmmss");
 
-        try
-        {
-            using StreamWriter writer =
-                new(path: Path.Combine(path1: outputFolder, path2: $"HLWebScraper_Output_{nowDTStr}.csv"));
-            using CsvWriter csv = new(writer: writer, culture: CultureInfo.InvariantCulture);
-            csv.WriteHeader<SEDOL>();
-            csv.NextRecord();
-            foreach (SEDOL record in SEDOLs)
-            {
-                csv.WriteRecord(record: record);
-                csv.NextRecord();
-            }
+        // if filters are active ask user if they want to use selection
+        DialogResult dialogResult = DialogResult.No;
+        if (cbx_Securities.Items.Count > 0 &&
+            cbx_Securities.Items.Count < SEDOLs.Count &&
+            tcr_Main.SelectedTab == tpg_Overview)
+            dialogResult = MessageBox.Show(text: "Only export filtered items?",
+                caption: "Filters are active.",
+                buttons: MessageBoxButtons.YesNoCancel, icon: MessageBoxIcon.Question);
 
-            writer.Flush();
-            MessageBox.Show(text: $"Finished writing the CSV file - HLWebScraper_Output_{nowDTStr}.csv",
-                caption: "Ok writing CSV",
-                buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
+        List<SEDOL> sedolList = new();
+        if (dialogResult == DialogResult.Yes)
         {
-            MessageBox.Show(text: $"Failed to write the CSV file - {ex.Message}", caption: "Error writing CSV",
-                buttons: MessageBoxButtons.OK,
-                icon: MessageBoxIcon.Error);
+            foreach (object item in cbx_Securities.Items)
+                if (item is SEDOL selectedSEDOL)
+                    sedolList.Add(item: selectedSEDOL);
         }
+        else if (dialogResult == DialogResult.No)
+        {
+            foreach (SEDOL sedol in SEDOLs)
+
+                sedolList.Add(item: sedol);
+        }
+
+        if (dialogResult != DialogResult.Cancel)
+            try
+            {
+                using StreamWriter writer =
+                    new(path: Path.Combine(path1: outputFolder, path2: $"HLWebScraper_Output_{nowDTStr}.csv"));
+                using CsvWriter csv = new(writer: writer, culture: CultureInfo.InvariantCulture);
+                csv.WriteHeader<SEDOL>();
+                csv.NextRecord();
+                foreach (SEDOL record in SEDOLs.Where(predicate: record =>
+                             (dialogResult == DialogResult.Yes && sedolList.Contains(item: record)) ||
+                             dialogResult == DialogResult.No))
+                {
+                    csv.WriteRecord(record: record);
+                    csv.NextRecord();
+                }
+
+                writer.Flush();
+                MessageBox.Show(text: $"Finished writing the CSV file - HLWebScraper_Output_{nowDTStr}.csv",
+                    caption: "Ok writing CSV",
+                    buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(text: $"Failed to write the CSV file - {ex.Message}", caption: "Error writing CSV",
+                    buttons: MessageBoxButtons.OK,
+                    icon: MessageBoxIcon.Error);
+            }
     }
 
 #endregion
