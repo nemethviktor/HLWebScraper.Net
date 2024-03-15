@@ -41,6 +41,7 @@ namespace HLWebScraper.Net
             tcr_Main = new TabControl();
             tpg_Scrape = new TabPage();
             tbl_ScrapeMainGrid = new TableLayoutPanel();
+            lbx_Alphabet = new ListBox();
             btn_StartScrape = new Button();
             btn_Stop = new Button();
             gbx_Log = new GroupBox();
@@ -99,6 +100,7 @@ namespace HLWebScraper.Net
             btn_ReloadCategories = new Button();
             ttp_Sector = new ToolTip(components);
             ttp_ETFType = new ToolTip(components);
+            lbl_SelectionPicker = new Label();
             mns_Main.SuspendLayout();
             tbl_Main.SuspendLayout();
             tcr_Main.SuspendLayout();
@@ -197,29 +199,49 @@ namespace HLWebScraper.Net
             // 
             // tbl_ScrapeMainGrid
             // 
-            tbl_ScrapeMainGrid.ColumnCount = 3;
+            tbl_ScrapeMainGrid.ColumnCount = 4;
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
-            tbl_ScrapeMainGrid.Controls.Add(btn_StartScrape, 0, 0);
-            tbl_ScrapeMainGrid.Controls.Add(btn_Stop, 1, 0);
+            tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            tbl_ScrapeMainGrid.Controls.Add(lbl_SelectionPicker, 0, 0);
+            tbl_ScrapeMainGrid.Controls.Add(lbx_Alphabet, 1, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_StartScrape, 2, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_Stop, 3, 0);
             tbl_ScrapeMainGrid.Controls.Add(gbx_Log, 0, 1);
             tbl_ScrapeMainGrid.Dock = DockStyle.Fill;
             tbl_ScrapeMainGrid.Location = new Point(3, 3);
             tbl_ScrapeMainGrid.Name = "tbl_ScrapeMainGrid";
             tbl_ScrapeMainGrid.RowCount = 2;
-            tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
             tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle());
+            tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tbl_ScrapeMainGrid.Size = new Size(776, 356);
             tbl_ScrapeMainGrid.TabIndex = 7;
+            // 
+            // lbx_Alphabet
+            // 
+            lbx_Alphabet.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            lbx_Alphabet.ColumnWidth = 8;
+            lbx_Alphabet.FormattingEnabled = true;
+            lbx_Alphabet.HorizontalScrollbar = true;
+            lbx_Alphabet.ItemHeight = 15;
+            lbx_Alphabet.Items.AddRange(new object[] { '0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' });
+            lbx_Alphabet.Location = new Point(171, 3);
+            lbx_Alphabet.MultiColumn = true;
+            lbx_Alphabet.Name = "lbx_Alphabet";
+            lbx_Alphabet.SelectionMode = SelectionMode.MultiSimple;
+            lbx_Alphabet.Size = new Size(242, 28);
+            lbx_Alphabet.Sorted = true;
+            lbx_Alphabet.TabIndex = 3;
             // 
             // btn_StartScrape
             // 
             btn_StartScrape.AutoSize = true;
             btn_StartScrape.Dock = DockStyle.Right;
-            btn_StartScrape.Location = new Point(3, 3);
+            btn_StartScrape.Location = new Point(419, 3);
             btn_StartScrape.Name = "btn_StartScrape";
-            btn_StartScrape.Size = new Size(94, 24);
+            btn_StartScrape.Size = new Size(94, 28);
             btn_StartScrape.TabIndex = 7;
             btn_StartScrape.Text = "Start Scrape";
             btn_StartScrape.UseVisualStyleBackColor = false;
@@ -229,9 +251,9 @@ namespace HLWebScraper.Net
             // 
             btn_Stop.AutoSize = true;
             btn_Stop.Dock = DockStyle.Right;
-            btn_Stop.Location = new Point(103, 3);
+            btn_Stop.Location = new Point(732, 3);
             btn_Stop.Name = "btn_Stop";
-            btn_Stop.Size = new Size(41, 24);
+            btn_Stop.Size = new Size(41, 28);
             btn_Stop.TabIndex = 12;
             btn_Stop.Text = "Stop";
             btn_Stop.UseVisualStyleBackColor = false;
@@ -240,12 +262,12 @@ namespace HLWebScraper.Net
             // gbx_Log
             // 
             gbx_Log.AutoSize = true;
-            tbl_ScrapeMainGrid.SetColumnSpan(gbx_Log, 3);
+            tbl_ScrapeMainGrid.SetColumnSpan(gbx_Log, 4);
             gbx_Log.Controls.Add(tbx_Log);
             gbx_Log.Dock = DockStyle.Fill;
-            gbx_Log.Location = new Point(3, 33);
+            gbx_Log.Location = new Point(3, 37);
             gbx_Log.Name = "gbx_Log";
-            gbx_Log.Size = new Size(770, 320);
+            gbx_Log.Size = new Size(770, 316);
             gbx_Log.TabIndex = 8;
             gbx_Log.TabStop = false;
             gbx_Log.Text = "Log";
@@ -259,7 +281,7 @@ namespace HLWebScraper.Net
             tbx_Log.Name = "tbx_Log";
             tbx_Log.ReadOnly = true;
             tbx_Log.ScrollBars = ScrollBars.Both;
-            tbx_Log.Size = new Size(764, 298);
+            tbx_Log.Size = new Size(764, 294);
             tbx_Log.TabIndex = 2;
             // 
             // tpg_Overview
@@ -776,6 +798,17 @@ namespace HLWebScraper.Net
             btn_ReloadCategories.UseVisualStyleBackColor = false;
             btn_ReloadCategories.Click += btn_ReloadCategories_Click;
             // 
+            // lbl_SelectionPicker
+            // 
+            lbl_SelectionPicker.AutoSize = true;
+            lbl_SelectionPicker.Dock = DockStyle.Fill;
+            lbl_SelectionPicker.Location = new Point(3, 0);
+            lbl_SelectionPicker.Name = "lbl_SelectionPicker";
+            lbl_SelectionPicker.Size = new Size(162, 34);
+            lbl_SelectionPicker.TabIndex = 3;
+            lbl_SelectionPicker.Text = "Select which letters to scrape \r\n(you prob want all of them):";
+            lbl_SelectionPicker.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // FrmMainApp
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -822,10 +855,8 @@ namespace HLWebScraper.Net
         private TabControl tcr_Main;
         private TabPage tpg_Scrape;
         private TableLayoutPanel tbl_ScrapeMainGrid;
-        private Button btn_StartScrape;
         private Button btn_Stop;
         private GroupBox gbx_Log;
-        private TextBox tbx_Log;
         private Button btn_ReloadCategories;
         private Button btn_SaveToCSV;
         private TabPage tpg_Overview;
@@ -881,5 +912,9 @@ namespace HLWebScraper.Net
         private TextBox tbx_Volume;
         private Label lbl_Volume;
         private ToolStripMenuItem tsmi_DarkishMode;
+        private Button btn_StartScrape;
+        private TextBox tbx_Log;
+        private ListBox lbx_Alphabet;
+        private Label lbl_SelectionPicker;
     }
 }

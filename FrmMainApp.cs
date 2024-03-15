@@ -18,6 +18,8 @@ public partial class FrmMainApp : Form
     private const string FxUrl = "https://www.floatrates.com/daily/gbp.json";
     private const string Not_ETF_ETFType = "## Not ETF";
     internal static readonly FXCurrencyCollection FxCurrencies = new();
+    private static char[] selectedAlphabet;
+
 
     private static readonly HashSet<string> UrlListOfStocksAndShares = new();
     private static readonly CompressedMemoryCache urlAndHtmlContentHashtable = new();
@@ -53,6 +55,13 @@ public partial class FrmMainApp : Form
         btn_ReloadCategories.Enabled = false;
         btn_SaveToCSV.Enabled = false;
         tpg_Overview.Enabled = false;
+
+    #if DEBUG
+        lbx_Alphabet.SetSelected(index: lbx_Alphabet.FindStringExact(s: "y"), value: true);
+    #else
+        for (int i = 0; i < lbx_Alphabet.Items.Count; i++)
+            lbx_Alphabet.SetSelected(index: i, value: true);
+    #endif
     }
 
 #region Overview Tab
@@ -155,11 +164,6 @@ public partial class FrmMainApp : Form
     private static async Task CollateHLStocksByLetterAsync(FrmMainApp formInstance,
         CancellationToken cancellationToken)
     {
-        string alphabet = "abcdefghijklmnopqrstuvwxyz0";
-    #if DEBUG
-        alphabet = "y";
-    #endif
-
         const string logMessageVal = "Building Initial list of stocks and shares";
         AppendLogWindowText(tbx: formInstance.tbx_Log,
             appendText:
@@ -168,7 +172,7 @@ public partial class FrmMainApp : Form
 
         int totalUrls = UrlListOfStocksAndShares.Count;
 
-        foreach (char alphabetChar in alphabet)
+        foreach (char alphabetChar in selectedAlphabet)
         {
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Parsing block: " + alphabetChar,
                 logMessageType: LogMessageTypes.None);
@@ -693,55 +697,64 @@ public partial class FrmMainApp : Form
     /// <param name="e"></param>
     private async void btn_StartScrape_Click(object sender, EventArgs e)
     {
-        // reset things.
-        btn_StartScrape.Enabled = false;
-        btn_Stop.Enabled = true;
-        btn_ReloadCategories.Enabled = false;
-        btn_SaveToCSV.Enabled = false;
-        tpg_Overview.Enabled = false;
-
-        tbx_Log.Clear();
-        FxCurrencies.Clear();
-        urlAndHtmlContentHashtable.Clear();
-        urlAndCompanyInfoHashtable.Clear();
-
-        UrlListOfStocksAndShares.Clear();
-
-        _urlCounter = 0;
-
-        cancellationTokenSource = new CancellationTokenSource();
-
-        if (await ReadJsonFXFromWebAsync(formInstance: this, cancellationToken: cancellationTokenSource.Token))
-            await CollateHLStocksByLetterAsync(formInstance: this,
-                cancellationToken: cancellationTokenSource.Token);
-
-        foreach (SEDOL? newSedol in UrlListOfStocksAndShares.Select(selector: CreateSEDOL).OfType<SEDOL>())
-            if (!string.IsNullOrWhiteSpace(value: newSedol?.SEDOL_ID))
-                SEDOLs.Add(item: newSedol);
-
-        btn_StartScrape.Enabled = true;
-        btn_Stop.Enabled = false;
-        btn_ReloadCategories.Enabled = true;
-        if (SEDOLs.Count > 0)
+        selectedAlphabet = lbx_Alphabet.SelectedItems.Cast<char>().ToArray();
+        if (selectedAlphabet.Length > 0)
         {
-            btn_SaveToCSV.Enabled = true;
-            tpg_Overview.Enabled = true;
-            FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
-            string logMessageVal = "Building parsing data - ready for output.";
-            AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
-                logMessageType: LogMessageTypes.Done);
+            // reset things.
+            btn_StartScrape.Enabled = false;
+            btn_Stop.Enabled = true;
+            btn_ReloadCategories.Enabled = false;
+            btn_SaveToCSV.Enabled = false;
+            tpg_Overview.Enabled = false;
+
+            tbx_Log.Clear();
+            FxCurrencies.Clear();
+            urlAndHtmlContentHashtable.Clear();
+            urlAndCompanyInfoHashtable.Clear();
+            UrlListOfStocksAndShares.Clear();
+
+            _urlCounter = 0;
+
+            cancellationTokenSource = new CancellationTokenSource();
+
+            if (await ReadJsonFXFromWebAsync(formInstance: this, cancellationToken: cancellationTokenSource.Token))
+                await CollateHLStocksByLetterAsync(formInstance: this,
+                    cancellationToken: cancellationTokenSource.Token);
+
+            foreach (SEDOL? newSedol in UrlListOfStocksAndShares.Select(selector: CreateSEDOL).OfType<SEDOL>())
+                if (!string.IsNullOrWhiteSpace(value: newSedol?.SEDOL_ID))
+                    SEDOLs.Add(item: newSedol);
+
+            btn_StartScrape.Enabled = true;
+            btn_Stop.Enabled = false;
+            btn_ReloadCategories.Enabled = true;
+            if (SEDOLs.Count > 0)
+            {
+                btn_SaveToCSV.Enabled = true;
+                tpg_Overview.Enabled = true;
+                FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
+                string logMessageVal = "Building parsing data - ready for output.";
+                AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
+                    logMessageType: LogMessageTypes.Done);
+            }
+            else
+            {
+                FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
+                string logMessageVal = "Building parsing data encountered an error. No data was parsed.";
+                AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
+                    logMessageType: LogMessageTypes.Error);
+            }
+
+            // release memory
+            urlAndHtmlContentHashtable.Clear();
+            urlAndCompanyInfoHashtable.Clear();
         }
         else
         {
-            FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
-            string logMessageVal = "Building parsing data encountered an error. No data was parsed.";
-            AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
-                logMessageType: LogMessageTypes.Error);
+            MessageBox.Show(text: "You do need to select at least one character you know.",
+                caption: "Nothing selected.",
+                buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Warning);
         }
-
-        // release memory
-        urlAndHtmlContentHashtable.Clear();
-        urlAndCompanyInfoHashtable.Clear();
     }
 
 

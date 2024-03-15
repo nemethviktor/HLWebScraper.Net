@@ -1,8 +1,9 @@
 # GeoTagNinja Changelog
 
-**Build 8839 [20240314] ** 
+**Build 88xx [202403xx] ** 
 - NEW & UPDATED:
   - Added changlog.md and patched readme.md a bit
+  - Added logic to allow for limited selection of scraping targets
 
 - BUGS & FIXES:
   - Changed the HttpClient call process to split calls into chunks of (2x) 50s. 
