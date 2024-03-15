@@ -72,9 +72,12 @@ public partial class FrmMainApp : Form
     /// <param name="filter"></param>
     private void FillCbx_Securities(string filter = "")
     {
+        cbx_Securities.SelectedValue = string.Empty;
         List<SEDOL> sedolList = SEDOLs.Where(predicate: sedol =>
                                            ((sedol.Is_ISA_Compatible && ckb_ISAOnlySearch.Checked) ||
                                             !ckb_ISAOnlySearch.Checked) &&
+                                           ((sedol.ETF_Type != Not_ETF_ETFType && ckb_ETFOnlySearch.Checked) ||
+                                            !ckb_ETFOnlySearch.Checked) &&
                                            (sedol.Name.ToLower().Contains(value: filter.ToLower()) ||
                                             string.IsNullOrWhiteSpace(value: filter)))
                                       .ToList();
@@ -792,6 +795,11 @@ public partial class FrmMainApp : Form
     }
 
     private void ckb_ISAOnlySearch_CheckedChanged(object sender, EventArgs e)
+    {
+        FillCbx_Securities(filter: tbx_Search.Text);
+    }
+
+    private void ckb_ETFOnlySearch_CheckedChanged(object sender, EventArgs e)
     {
         FillCbx_Securities(filter: tbx_Search.Text);
     }

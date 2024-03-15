@@ -41,6 +41,7 @@ namespace HLWebScraper.Net
             tcr_Main = new TabControl();
             tpg_Scrape = new TabPage();
             tbl_ScrapeMainGrid = new TableLayoutPanel();
+            lbl_SelectionPicker = new Label();
             lbx_Alphabet = new ListBox();
             btn_StartScrape = new Button();
             btn_Stop = new Button();
@@ -69,7 +70,6 @@ namespace HLWebScraper.Net
             tbx_OpenPrice_OC = new TextBox();
             lbl_OpenPrice = new Label();
             gbx_PickSearch = new GroupBox();
-            ckb_ISAOnlySearch = new CheckBox();
             lbl_Filter = new Label();
             tbx_Search = new TextBox();
             cbx_Securities = new ComboBox();
@@ -100,7 +100,9 @@ namespace HLWebScraper.Net
             btn_ReloadCategories = new Button();
             ttp_Sector = new ToolTip(components);
             ttp_ETFType = new ToolTip(components);
-            lbl_SelectionPicker = new Label();
+            gbx_Only = new GroupBox();
+            ckb_ETFOnlySearch = new CheckBox();
+            ckb_ISAOnlySearch = new CheckBox();
             mns_Main.SuspendLayout();
             tbl_Main.SuspendLayout();
             tcr_Main.SuspendLayout();
@@ -113,6 +115,7 @@ namespace HLWebScraper.Net
             gbx_Overview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbx_ETFType).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pbx_Sector).BeginInit();
+            gbx_Only.SuspendLayout();
             SuspendLayout();
             // 
             // mns_Main
@@ -219,6 +222,17 @@ namespace HLWebScraper.Net
             tbl_ScrapeMainGrid.Size = new Size(776, 356);
             tbl_ScrapeMainGrid.TabIndex = 7;
             // 
+            // lbl_SelectionPicker
+            // 
+            lbl_SelectionPicker.AutoSize = true;
+            lbl_SelectionPicker.Dock = DockStyle.Fill;
+            lbl_SelectionPicker.Location = new Point(3, 0);
+            lbl_SelectionPicker.Name = "lbl_SelectionPicker";
+            lbl_SelectionPicker.Size = new Size(162, 34);
+            lbl_SelectionPicker.TabIndex = 3;
+            lbl_SelectionPicker.Text = "Select which letters to scrape \r\n(you prob want all of them):";
+            lbl_SelectionPicker.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // lbx_Alphabet
             // 
             lbx_Alphabet.Anchor = AnchorStyles.Left | AnchorStyles.Right;
@@ -227,11 +241,11 @@ namespace HLWebScraper.Net
             lbx_Alphabet.HorizontalScrollbar = true;
             lbx_Alphabet.ItemHeight = 15;
             lbx_Alphabet.Items.AddRange(new object[] { '0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' });
-            lbx_Alphabet.Location = new Point(171, 3);
+            lbx_Alphabet.Location = new Point(171, 7);
             lbx_Alphabet.MultiColumn = true;
             lbx_Alphabet.Name = "lbx_Alphabet";
             lbx_Alphabet.SelectionMode = SelectionMode.MultiSimple;
-            lbx_Alphabet.Size = new Size(242, 28);
+            lbx_Alphabet.Size = new Size(242, 19);
             lbx_Alphabet.Sorted = true;
             lbx_Alphabet.TabIndex = 3;
             // 
@@ -497,32 +511,21 @@ namespace HLWebScraper.Net
             // 
             // gbx_PickSearch
             // 
-            gbx_PickSearch.Controls.Add(ckb_ISAOnlySearch);
+            gbx_PickSearch.Controls.Add(gbx_Only);
             gbx_PickSearch.Controls.Add(lbl_Filter);
             gbx_PickSearch.Controls.Add(tbx_Search);
             gbx_PickSearch.Controls.Add(cbx_Securities);
-            gbx_PickSearch.Location = new Point(27, 20);
+            gbx_PickSearch.Location = new Point(27, 15);
             gbx_PickSearch.Name = "gbx_PickSearch";
-            gbx_PickSearch.Size = new Size(383, 100);
+            gbx_PickSearch.Size = new Size(383, 105);
             gbx_PickSearch.TabIndex = 5;
             gbx_PickSearch.TabStop = false;
             gbx_PickSearch.Text = "Pick & Search";
             // 
-            // ckb_ISAOnlySearch
-            // 
-            ckb_ISAOnlySearch.AutoSize = true;
-            ckb_ISAOnlySearch.Location = new Point(268, 26);
-            ckb_ISAOnlySearch.Name = "ckb_ISAOnlySearch";
-            ckb_ISAOnlySearch.Size = new Size(76, 19);
-            ckb_ISAOnlySearch.TabIndex = 7;
-            ckb_ISAOnlySearch.Text = "ISA Only?";
-            ckb_ISAOnlySearch.UseVisualStyleBackColor = true;
-            ckb_ISAOnlySearch.CheckedChanged += ckb_ISAOnlySearch_CheckedChanged;
-            // 
             // lbl_Filter
             // 
             lbl_Filter.AutoSize = true;
-            lbl_Filter.Location = new Point(15, 25);
+            lbl_Filter.Location = new Point(15, 37);
             lbl_Filter.Name = "lbl_Filter";
             lbl_Filter.Size = new Size(33, 15);
             lbl_Filter.TabIndex = 6;
@@ -530,17 +533,17 @@ namespace HLWebScraper.Net
             // 
             // tbx_Search
             // 
-            tbx_Search.Location = new Point(60, 22);
+            tbx_Search.Location = new Point(60, 34);
             tbx_Search.Name = "tbx_Search";
             tbx_Search.PlaceholderText = "Type here to search";
-            tbx_Search.Size = new Size(196, 23);
+            tbx_Search.Size = new Size(174, 23);
             tbx_Search.TabIndex = 5;
             tbx_Search.TextChanged += tbx_Search_TextChanged;
             // 
             // cbx_Securities
             // 
             cbx_Securities.FormattingEnabled = true;
-            cbx_Securities.Location = new Point(15, 61);
+            cbx_Securities.Location = new Point(15, 70);
             cbx_Securities.Name = "cbx_Securities";
             cbx_Securities.Size = new Size(340, 23);
             cbx_Securities.TabIndex = 4;
@@ -798,16 +801,38 @@ namespace HLWebScraper.Net
             btn_ReloadCategories.UseVisualStyleBackColor = false;
             btn_ReloadCategories.Click += btn_ReloadCategories_Click;
             // 
-            // lbl_SelectionPicker
+            // gbx_Only
             // 
-            lbl_SelectionPicker.AutoSize = true;
-            lbl_SelectionPicker.Dock = DockStyle.Fill;
-            lbl_SelectionPicker.Location = new Point(3, 0);
-            lbl_SelectionPicker.Name = "lbl_SelectionPicker";
-            lbl_SelectionPicker.Size = new Size(162, 34);
-            lbl_SelectionPicker.TabIndex = 3;
-            lbl_SelectionPicker.Text = "Select which letters to scrape \r\n(you prob want all of them):";
-            lbl_SelectionPicker.TextAlign = ContentAlignment.MiddleCenter;
+            gbx_Only.Controls.Add(ckb_ETFOnlySearch);
+            gbx_Only.Controls.Add(ckb_ISAOnlySearch);
+            gbx_Only.Location = new Point(248, 14);
+            gbx_Only.Name = "gbx_Only";
+            gbx_Only.Size = new Size(129, 50);
+            gbx_Only.TabIndex = 9;
+            gbx_Only.TabStop = false;
+            gbx_Only.Text = "Only";
+            // 
+            // ckb_ETFOnlySearch
+            // 
+            ckb_ETFOnlySearch.AutoSize = true;
+            ckb_ETFOnlySearch.Location = new Point(81, 21);
+            ckb_ETFOnlySearch.Name = "ckb_ETFOnlySearch";
+            ckb_ETFOnlySearch.Size = new Size(44, 19);
+            ckb_ETFOnlySearch.TabIndex = 10;
+            ckb_ETFOnlySearch.Text = "ETF";
+            ckb_ETFOnlySearch.UseVisualStyleBackColor = true;
+            ckb_ETFOnlySearch.CheckedChanged += ckb_ETFOnlySearch_CheckedChanged;
+            // 
+            // ckb_ISAOnlySearch
+            // 
+            ckb_ISAOnlySearch.AutoSize = true;
+            ckb_ISAOnlySearch.Location = new Point(14, 21);
+            ckb_ISAOnlySearch.Name = "ckb_ISAOnlySearch";
+            ckb_ISAOnlySearch.Size = new Size(43, 19);
+            ckb_ISAOnlySearch.TabIndex = 9;
+            ckb_ISAOnlySearch.Text = "ISA";
+            ckb_ISAOnlySearch.UseVisualStyleBackColor = true;
+            ckb_ISAOnlySearch.CheckedChanged += this.ckb_ISAOnlySearch_CheckedChanged;
             // 
             // FrmMainApp
             // 
@@ -842,6 +867,8 @@ namespace HLWebScraper.Net
             gbx_Overview.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pbx_ETFType).EndInit();
             ((System.ComponentModel.ISupportInitialize)pbx_Sector).EndInit();
+            gbx_Only.ResumeLayout(false);
+            gbx_Only.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -888,7 +915,6 @@ namespace HLWebScraper.Net
         private TextBox tbx_Currency;
         private Label lbl_Currency;
         private TextBox textBox1;
-        private CheckBox ckb_ISAOnlySearch;
         private TextBox tbx_Country;
         private TextBox tbx_Indicies;
         private Label lbl_OpenPrice;
@@ -916,5 +942,8 @@ namespace HLWebScraper.Net
         private TextBox tbx_Log;
         private ListBox lbx_Alphabet;
         private Label lbl_SelectionPicker;
+        private GroupBox gbx_Only;
+        private CheckBox ckb_ETFOnlySearch;
+        private CheckBox ckb_ISAOnlySearch;
     }
 }
