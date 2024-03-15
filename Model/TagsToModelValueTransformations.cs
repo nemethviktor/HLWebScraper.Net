@@ -67,125 +67,88 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Somewhat arbitrarily attempts to figure if something is stuff like Gilts or an ETF or not. If likely neither then
     ///     we try to pull the Sector info from teh company-info page.
+    ///     Items that have a non-zero market cap are definitely not ETFs
     /// </summary>
     /// <param name="companyPageText"></param>
     /// <param name="securityNameLowerCase"></param>
     /// <param name="ticker"></param>
+    /// <param name="marketCapOverZero"></param>
     /// <returns></returns>
-    public static string T2M_Sector(string companyPageText, string securityNameLowerCase, string ticker)
+    public static string T2M_Sector(string companyPageText, string securityNameLowerCase, string ticker,
+        bool marketCapOverZero)
     {
         securityNameLowerCase = securityNameLowerCase.ToLower();
         string sector = "Unspecified";
-        List<string> invalidatingContainerList = new() { " ord ", " ordinary ", " npv", "stk", ".0", ".1" };
-        if (!invalidatingContainerList.Any(predicate: container => securityNameLowerCase.Contains(value: container)))
+
+        // Items that have a non - zero market cap are definitely not ETFs
+        if (!marketCapOverZero)
         {
-            if (securityNameLowerCase.Contains(value: "gilt"))
-                sector = "Gilts etc";
-
-            if (securityNameLowerCase.Contains(value: "daily ") ||
-                securityNameLowerCase.Contains(value: " daily"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "invesco"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "etf ") ||
-                securityNameLowerCase.Contains(value: " etf"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "fund ") ||
-                securityNameLowerCase.Contains(value: " fund"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "ucits"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "msci"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "accum"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "etc"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "ishares"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "jp morgan") &&
-                ticker != "JPM")
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "growth"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "lyxor"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "commodity"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "index"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "wisdomtree"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "wisdom tree"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "gold bu"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "xtrackers"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "multi unit"))
-                sector = "ETF 1x";
-
-            if (securityNameLowerCase.Contains(value: "-1x"))
-                sector = "ETF -1x";
-
-            if (securityNameLowerCase.Contains(value: "5x"))
-                sector = "ETF 5x";
-
-            if (securityNameLowerCase.StartsWith(value: "double short"))
-                sector = "ETF -2x";
-
-            if (securityNameLowerCase.Contains(value: "2x"))
-                sector = "ETF 2x";
-
-            if (securityNameLowerCase.Contains(value: "-2x"))
-                sector = "ETF -2x";
-
-            if (securityNameLowerCase.Contains(value: "2.25x"))
-                sector = "ETF 2x";
-
-            if (securityNameLowerCase.Contains(value: "3x"))
-                sector = "ETF 3x";
-
-            if (securityNameLowerCase.Contains(value: "4x"))
-                sector = "ETF 4x";
-
-            if (securityNameLowerCase.Contains(value: "%"))
-                sector = "Gilts etc";
-
-            // if starts with ETF, ends with x, contains (short OR inverse), doesn't contain a negative ("-") or a bunch of other words then 
-            if (securityNameLowerCase.Contains(value: "short") ||
-                (securityNameLowerCase.Contains(value: "inverse") &&
-                 sector.StartsWith(value: "ETF") && sector.EndsWith(value: "x") &&
-                 !(sector.StartsWith(value: "ETF -") && sector.EndsWith(value: "x"))))
+            List<string> invalidatingContainerList = new() { " ord ", " ordinary ", " npv", "stk", ".0", ".1" };
+            if (!invalidatingContainerList.Any(predicate: container =>
+                    securityNameLowerCase.Contains(value: container)))
             {
-                List<string> ignoreContainsList = new()
+                List<string> etf1xContainerList = new()
                 {
-                    "short term",
-                    "short-term",
-                    "matur",
-                    "ultra",
-                    "duration"
+                    "daily ", " daily", "invesco", "etf ", " etf", "fund ", " fund", "ucits", "msci", "accum", "etc",
+                    "ishares", "growth", "lyxor", "commodity", "index", "wisdomtree", "wisdom tree", "gold bu",
+                    "xtrackers", "multi unit", "xbt provider"
                 };
-                if (!ignoreContainsList.Any(predicate: container => sector.Contains(value: container)))
-                    sector = sector.Replace(oldValue: "ETF ", newValue: "ETF -");
+                if (securityNameLowerCase.Contains(value: "gilt"))
+                    sector = "Gilts etc";
+
+                if (etf1xContainerList.Any(predicate: container =>
+                        securityNameLowerCase.Contains(value: container)))
+                    sector = "ETF 1x";
+
+
+                if (securityNameLowerCase.Contains(value: "jp morgan") &&
+                    ticker != "JPM")
+                    sector = "ETF 1x";
+
+                if (securityNameLowerCase.Contains(value: "-1x"))
+                    sector = "ETF -1x";
+
+                if (securityNameLowerCase.Contains(value: "5x"))
+                    sector = "ETF 5x";
+
+                if (securityNameLowerCase.StartsWith(value: "double short"))
+                    sector = "ETF -2x";
+
+                if (securityNameLowerCase.Contains(value: "2x"))
+                    sector = "ETF 2x";
+
+                if (securityNameLowerCase.Contains(value: "-2x"))
+                    sector = "ETF -2x";
+
+                if (securityNameLowerCase.Contains(value: "2.25x"))
+                    sector = "ETF 2x";
+
+                if (securityNameLowerCase.Contains(value: "3x"))
+                    sector = "ETF 3x";
+
+                if (securityNameLowerCase.Contains(value: "4x"))
+                    sector = "ETF 4x";
+
+                if (securityNameLowerCase.Contains(value: "%"))
+                    sector = "Gilts etc";
+
+                // if starts with ETF, ends with x, contains (short OR inverse), doesn't contain a negative ("-") or a bunch of other words then 
+                if (securityNameLowerCase.Contains(value: "short") ||
+                    (securityNameLowerCase.Contains(value: "inverse") &&
+                     sector.StartsWith(value: "ETF") && sector.EndsWith(value: "x") &&
+                     !(sector.StartsWith(value: "ETF -") && sector.EndsWith(value: "x"))))
+                {
+                    List<string> ignoreContainsList = new()
+                    {
+                        "short term",
+                        "short-term",
+                        "matur",
+                        "ultra",
+                        "duration"
+                    };
+                    if (!ignoreContainsList.Any(predicate: container => sector.Contains(value: container)))
+                        sector = sector.Replace(oldValue: "ETF ", newValue: "ETF -");
+                }
             }
         }
 
