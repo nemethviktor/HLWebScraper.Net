@@ -37,6 +37,7 @@ On that note the app can only collect stuff that's either visibly available on t
 
 - Requires Windows 10. Lower versions kept throwing SSL errors so I disabled Windows 7/8.x, sorry. I think they're pretty uncommon by this point anyway.
 - Requires .NET Windows Desktop Runtime v8 - Windows should trigger a manual install request if missing, it's a file download straight from Microsoft's website.
+- Also needs access to the Roaming (usually C:\Users\user\AppData\Roaming but not necessarily) folder to store the settings.
 
 ### Performance
 

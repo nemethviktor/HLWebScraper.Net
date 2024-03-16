@@ -1,14 +1,17 @@
 # HLWebscraper.Net Changelog
 
-**Build 88xx [202403xx] ** 
+**Build 88xx [202403xx]** 
 - NEW & UPDATED:
   - I've rewritten the HttpClient handling. Should have read up on the documentation beforehand - no more loops!
-  - Added the HttpClient config options into the config file, though I strongly suggest not changing them.
+  - Against my better judgement I've moved the "Settings" to a SQLite File in the Roaming folder. This is because
+	- I know SQL (and the dragon isn't sleeping, famous last words there)
+	- It has worked in an another project of mine
+	- I certainly won't overwrite yours accidentially when I publish an updated version of the app
   
 - BUGS & FIXES:
   - N/A
 
-**Build 8840 [20240315] ** 
+**Build 8840 [20240315]** 
 - NEW & UPDATED:
   - Added logic to allow for limited selection of scraping targets
   - Added an ETF-only filter
@@ -23,7 +26,7 @@
   - Changed the logic to exclude items from ETF classification that have > 0 Market Cap. Those are actually companies.
   - Minor fixes.
 
-**Build 8838 [20240313] ** 
+**Build 8838 [20240313]** 
 - NEW & UPDATED:
   - Initial commit. Minor imperfections as one'd expect.
 

@@ -34,7 +34,9 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="31.0.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0-preview.2.24128.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,9 +67,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="app.config">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
     <None Update="Output\example_HLWebScraper_Output_20240315_192630.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

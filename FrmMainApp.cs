@@ -1,4 +1,3 @@
-using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
 using CsvHelper;
@@ -19,7 +18,6 @@ public partial class FrmMainApp : Form
     internal static readonly FXCurrencyCollection FxCurrencies = new();
     private static char[] selectedAlphabet;
 
-
     private static readonly HashSet<string> UrlListOfStocksAndShares = new();
     private static readonly CompressedMemoryCache urlAndHtmlContentHashtable = new();
     private static readonly CompressedMemoryCache urlAndCompanyInfoHashtable = new();
@@ -31,8 +29,6 @@ public partial class FrmMainApp : Form
 
     internal static IEnumerable<ETFType>? ETF_Types;
 
-    private Configuration _config;
-    private readonly KeyValueConfigurationCollection _settingsSection = new();
     private CancellationTokenSource cancellationTokenSource;
 
     private static HttpClient _httpClient = new();
@@ -40,22 +36,24 @@ public partial class FrmMainApp : Form
     public FrmMainApp()
     {
         cancellationTokenSource = new CancellationTokenSource();
-        _config = ConfigurationManager.OpenExeConfiguration(userLevel: ConfigurationUserLevel.None);
-        _settingsSection = _config.AppSettings.Settings;
 
         InitializeComponent();
-        GetETFTypesFromCSV();
+        GetETFTypesFromCSV(); // read user-defined ETF types
+        HelperDataDatabaseAndStartup.DataCreateSQLiteDB(); // make sure sqlite database exists (create if necessary)
+        HelperDataDatabaseAndStartup.DataWriteSQLiteSettingsDefaultSettings(); // fill db w/ defaults where needed
 
-        double pooledConnectionLifetimeSetting = _settingsSection.AllKeys.Contains(value: "PooledConnectionLifetime")
-            ? Convert.ToDouble(value: _settingsSection[key: "PooledConnectionLifetime"].Value)
-            : 2;
-        double pooledConnectionIdleTimeoutSetting =
-            _settingsSection.AllKeys.Contains(value: "PooledConnectionIdleTimeout")
-                ? Convert.ToDouble(value: _settingsSection[key: "PooledConnectionIdleTimeout"].Value)
-                : 1;
-        int maxConnectionsPerServerSetting = _settingsSection.AllKeys.Contains(value: "MaxConnectionsPerServer")
-            ? Convert.ToInt32(value: _settingsSection[key: "MaxConnectionsPerServer"].Value)
-            : 100;
+        // get defaults 
+        double pooledConnectionLifetimeSetting = Convert.ToDouble(
+            value: HelperDataApplicationSettings.DataReadSQLiteSettings(tableName: "settings",
+                settingId: "PooledConnectionLifetime"));
+
+        double pooledConnectionIdleTimeoutSetting = Convert.ToDouble(
+            value: HelperDataApplicationSettings.DataReadSQLiteSettings(tableName: "settings",
+                settingId: "PooledConnectionIdleTimeout"));
+
+        int maxConnectionsPerServerSetting = Convert.ToInt16(
+            value: HelperDataApplicationSettings.DataReadSQLiteSettings(tableName: "settings",
+                settingId: "MaxConnectionsPerServer"));
 
 
         SocketsHttpHandler socketsHandler = new()
@@ -70,7 +68,8 @@ public partial class FrmMainApp : Form
 
     private void FrmMainApp_Load(object sender, EventArgs e)
     {
-        if (_settingsSection[key: "Theme"].Value == "Dark") tsmi_DarkishMode.PerformClick();
+        if (HelperDataApplicationSettings.DataReadSQLiteSettings(tableName: "settings",
+                settingId: "Theme") == "Dark") tsmi_DarkishMode.PerformClick();
 
         btn_StartScrape.Enabled = true;
         btn_Stop.Enabled = false;
@@ -720,10 +719,14 @@ public partial class FrmMainApp : Form
         HelperVariables.UserSettingUseDarkMode = tsmi_DarkishMode.Checked;
         SetAppTheme();
 
-        _settingsSection[key: "Theme"].Value = HelperVariables.UserSettingUseDarkMode ? "Dark" : "Light";
+        HelperDataApplicationSettings.DataWriteSQLiteSettings(tableName: "settings", settingId: "Theme",
+            settingValue: HelperVariables.UserSettingUseDarkMode ? "Dark" : "Light");
+    }
 
-        _config.Save(saveMode: ConfigurationSaveMode.Modified);
-        ConfigurationManager.RefreshSection(sectionName: _config.AppSettings.SectionInformation.Name);
+    private void FrmMainApp_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        HelperDataApplicationSettings.DataDeleteSQLitesettingsCleanup();
+        HelperDataApplicationSettings.DataVacuumDatabase();
     }
 
 #endregion

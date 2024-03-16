@@ -70,6 +70,9 @@ namespace HLWebScraper.Net
             tbx_OpenPrice_OC = new TextBox();
             lbl_OpenPrice = new Label();
             gbx_PickSearch = new GroupBox();
+            gbx_Only = new GroupBox();
+            ckb_ETFOnlySearch = new CheckBox();
+            ckb_ISAOnlySearch = new CheckBox();
             lbl_Filter = new Label();
             tbx_Search = new TextBox();
             cbx_Securities = new ComboBox();
@@ -100,9 +103,6 @@ namespace HLWebScraper.Net
             btn_ReloadCategories = new Button();
             ttp_Sector = new ToolTip(components);
             ttp_ETFType = new ToolTip(components);
-            gbx_Only = new GroupBox();
-            ckb_ETFOnlySearch = new CheckBox();
-            ckb_ISAOnlySearch = new CheckBox();
             mns_Main.SuspendLayout();
             tbl_Main.SuspendLayout();
             tcr_Main.SuspendLayout();
@@ -112,10 +112,10 @@ namespace HLWebScraper.Net
             tpg_Overview.SuspendLayout();
             gbx_Indicators.SuspendLayout();
             gbx_PickSearch.SuspendLayout();
+            gbx_Only.SuspendLayout();
             gbx_Overview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pbx_ETFType).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pbx_Sector).BeginInit();
-            gbx_Only.SuspendLayout();
             SuspendLayout();
             // 
             // mns_Main
@@ -522,6 +522,39 @@ namespace HLWebScraper.Net
             gbx_PickSearch.TabStop = false;
             gbx_PickSearch.Text = "Pick & Search";
             // 
+            // gbx_Only
+            // 
+            gbx_Only.Controls.Add(ckb_ETFOnlySearch);
+            gbx_Only.Controls.Add(ckb_ISAOnlySearch);
+            gbx_Only.Location = new Point(248, 14);
+            gbx_Only.Name = "gbx_Only";
+            gbx_Only.Size = new Size(129, 50);
+            gbx_Only.TabIndex = 9;
+            gbx_Only.TabStop = false;
+            gbx_Only.Text = "Only";
+            // 
+            // ckb_ETFOnlySearch
+            // 
+            ckb_ETFOnlySearch.AutoSize = true;
+            ckb_ETFOnlySearch.Location = new Point(81, 21);
+            ckb_ETFOnlySearch.Name = "ckb_ETFOnlySearch";
+            ckb_ETFOnlySearch.Size = new Size(44, 19);
+            ckb_ETFOnlySearch.TabIndex = 10;
+            ckb_ETFOnlySearch.Text = "ETF";
+            ckb_ETFOnlySearch.UseVisualStyleBackColor = true;
+            ckb_ETFOnlySearch.CheckedChanged += ckb_ETFOnlySearch_CheckedChanged;
+            // 
+            // ckb_ISAOnlySearch
+            // 
+            ckb_ISAOnlySearch.AutoSize = true;
+            ckb_ISAOnlySearch.Location = new Point(14, 21);
+            ckb_ISAOnlySearch.Name = "ckb_ISAOnlySearch";
+            ckb_ISAOnlySearch.Size = new Size(43, 19);
+            ckb_ISAOnlySearch.TabIndex = 9;
+            ckb_ISAOnlySearch.Text = "ISA";
+            ckb_ISAOnlySearch.UseVisualStyleBackColor = true;
+            ckb_ISAOnlySearch.CheckedChanged += ckb_ISAOnlySearch_CheckedChanged;
+            // 
             // lbl_Filter
             // 
             lbl_Filter.AutoSize = true;
@@ -801,39 +834,6 @@ namespace HLWebScraper.Net
             btn_ReloadCategories.UseVisualStyleBackColor = false;
             btn_ReloadCategories.Click += btn_ReloadCategories_Click;
             // 
-            // gbx_Only
-            // 
-            gbx_Only.Controls.Add(ckb_ETFOnlySearch);
-            gbx_Only.Controls.Add(ckb_ISAOnlySearch);
-            gbx_Only.Location = new Point(248, 14);
-            gbx_Only.Name = "gbx_Only";
-            gbx_Only.Size = new Size(129, 50);
-            gbx_Only.TabIndex = 9;
-            gbx_Only.TabStop = false;
-            gbx_Only.Text = "Only";
-            // 
-            // ckb_ETFOnlySearch
-            // 
-            ckb_ETFOnlySearch.AutoSize = true;
-            ckb_ETFOnlySearch.Location = new Point(81, 21);
-            ckb_ETFOnlySearch.Name = "ckb_ETFOnlySearch";
-            ckb_ETFOnlySearch.Size = new Size(44, 19);
-            ckb_ETFOnlySearch.TabIndex = 10;
-            ckb_ETFOnlySearch.Text = "ETF";
-            ckb_ETFOnlySearch.UseVisualStyleBackColor = true;
-            ckb_ETFOnlySearch.CheckedChanged += ckb_ETFOnlySearch_CheckedChanged;
-            // 
-            // ckb_ISAOnlySearch
-            // 
-            ckb_ISAOnlySearch.AutoSize = true;
-            ckb_ISAOnlySearch.Location = new Point(14, 21);
-            ckb_ISAOnlySearch.Name = "ckb_ISAOnlySearch";
-            ckb_ISAOnlySearch.Size = new Size(43, 19);
-            ckb_ISAOnlySearch.TabIndex = 9;
-            ckb_ISAOnlySearch.Text = "ISA";
-            ckb_ISAOnlySearch.UseVisualStyleBackColor = true;
-            ckb_ISAOnlySearch.CheckedChanged += this.ckb_ISAOnlySearch_CheckedChanged;
-            // 
             // FrmMainApp
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -847,6 +847,7 @@ namespace HLWebScraper.Net
             MaximizeBox = false;
             Name = "FrmMainApp";
             Text = "HL Web Scraper/Parser";
+            FormClosing += FrmMainApp_FormClosing;
             Load += FrmMainApp_Load;
             mns_Main.ResumeLayout(false);
             mns_Main.PerformLayout();
@@ -863,12 +864,12 @@ namespace HLWebScraper.Net
             gbx_Indicators.PerformLayout();
             gbx_PickSearch.ResumeLayout(false);
             gbx_PickSearch.PerformLayout();
+            gbx_Only.ResumeLayout(false);
+            gbx_Only.PerformLayout();
             gbx_Overview.ResumeLayout(false);
             gbx_Overview.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pbx_ETFType).EndInit();
             ((System.ComponentModel.ISupportInitialize)pbx_Sector).EndInit();
-            gbx_Only.ResumeLayout(false);
-            gbx_Only.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
