@@ -3,6 +3,7 @@
 **Build 88xx [202403xx] ** 
 - NEW & UPDATED:
   - I've rewritten the HttpClient handling. Should have read up on the documentation beforehand - no more loops!
+  - Added the HttpClient config options into the config file, though I strongly suggest not changing them.
   
 - BUGS & FIXES:
   - N/A

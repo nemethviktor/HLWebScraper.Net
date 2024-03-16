@@ -32,7 +32,7 @@ public partial class FrmMainApp : Form
     internal static IEnumerable<ETFType>? ETF_Types;
 
     private Configuration _config;
-    private KeyValueConfigurationCollection _section = new();
+    private readonly KeyValueConfigurationCollection _settingsSection = new();
     private CancellationTokenSource cancellationTokenSource;
 
     private static HttpClient _httpClient = new();
@@ -40,14 +40,29 @@ public partial class FrmMainApp : Form
     public FrmMainApp()
     {
         cancellationTokenSource = new CancellationTokenSource();
+        _config = ConfigurationManager.OpenExeConfiguration(userLevel: ConfigurationUserLevel.None);
+        _settingsSection = _config.AppSettings.Settings;
 
         InitializeComponent();
         GetETFTypesFromCSV();
 
+        double pooledConnectionLifetimeSetting = _settingsSection.AllKeys.Contains(value: "PooledConnectionLifetime")
+            ? Convert.ToDouble(value: _settingsSection[key: "PooledConnectionLifetime"].Value)
+            : 2;
+        double pooledConnectionIdleTimeoutSetting =
+            _settingsSection.AllKeys.Contains(value: "PooledConnectionIdleTimeout")
+                ? Convert.ToDouble(value: _settingsSection[key: "PooledConnectionIdleTimeout"].Value)
+                : 1;
+        int maxConnectionsPerServerSetting = _settingsSection.AllKeys.Contains(value: "MaxConnectionsPerServer")
+            ? Convert.ToInt32(value: _settingsSection[key: "MaxConnectionsPerServer"].Value)
+            : 100;
+
+
         SocketsHttpHandler socketsHandler = new()
         {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(value: 2),
-            MaxConnectionsPerServer = 100
+            PooledConnectionLifetime = TimeSpan.FromMinutes(value: pooledConnectionLifetimeSetting),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(value: pooledConnectionIdleTimeoutSetting),
+            MaxConnectionsPerServer = maxConnectionsPerServerSetting
         };
 
         _httpClient = new HttpClient(handler: socketsHandler);
@@ -55,9 +70,7 @@ public partial class FrmMainApp : Form
 
     private void FrmMainApp_Load(object sender, EventArgs e)
     {
-        _config = ConfigurationManager.OpenExeConfiguration(userLevel: ConfigurationUserLevel.None);
-        _section = _config.AppSettings.Settings;
-        if (_section[key: "Theme"].Value == "Dark") tsmi_DarkishMode.PerformClick();
+        if (_settingsSection[key: "Theme"].Value == "Dark") tsmi_DarkishMode.PerformClick();
 
         btn_StartScrape.Enabled = true;
         btn_Stop.Enabled = false;
@@ -707,7 +720,7 @@ public partial class FrmMainApp : Form
         HelperVariables.UserSettingUseDarkMode = tsmi_DarkishMode.Checked;
         SetAppTheme();
 
-        _section[key: "Theme"].Value = HelperVariables.UserSettingUseDarkMode ? "Dark" : "Light";
+        _settingsSection[key: "Theme"].Value = HelperVariables.UserSettingUseDarkMode ? "Dark" : "Light";
 
         _config.Save(saveMode: ConfigurationSaveMode.Modified);
         ConfigurationManager.RefreshSection(sectionName: _config.AppSettings.SectionInformation.Name);

@@ -40,8 +40,8 @@ On that note the app can only collect stuff that's either visibly available on t
 
 ### Performance
 
-- The whole data pull is around 4.5GB but it appears to be capped on the server side somewhere around 15-20MB/sec (that's around 200 megabits/sec).
-- The whole end-to-end process (assuming favourable conditions) takes around 10-15 mins.
+- The data pull is around 4.5GB (cca 22,800 pages at the time of initial publication) but the transfer rate appears to be capped on the server side somewhere around 15-20MB/sec (that's around 200 megabits/sec).
+- The end-to-end process (assuming favourable conditions) takes around 10-15 mins.
 - The app uses a library (`CompressedMemoryCache.cs`) - the licence of that is contained in the file and was built by Gustavo Augusto Hennig (it's APACHE 2.0 btw)
     - It's necessary to use compression on the html pages because storing that many (read: tens of thousands) pages at 200-400kbytes each will eat up memory in no time. My initial tests of letters A-C made the app consume around 5GB RAM w/o compression and sub-1GB w/ compression.
 - I did some testing on what I deem is a 'normal' performance laptop, ie a Ryzen 7 PRO 5850U [8x 4370 MHz] w/ 32 GB RAM - the Release (non-Debug that is) version of the app peaked at 25% CPU and (again) around sub-1GB RAM.
@@ -87,7 +87,9 @@ I'm generally happy for anyone competent to add pull requests but I don't always
 
 ## Known Issues
 
-- "Ticker" extraction works on the basis of getting whatever's in the last parentheses of the header. This is because HL website doesn't appear to store this info separately. In some rare cases (espc w/ Trusts) this can yield odd results. (e.g. [here](https://www.hl.co.uk/shares/shares-search-results/b/baillie-gifford-us-growth-trust-ord) we'd pick up "USA", which is wrong.)
+- "Ticker" extraction works on the basis of getting whatever's in the last parentheses of the header. This is because HL website doesn't appear to store this info separately. In some rare cases (espc w/ Trusts) this can yield odd results. e.g.: 
+    - [here](https://www.hl.co.uk/shares/shares-search-results/b/baillie-gifford-us-growth-trust-ord) we'd pick up "USA", which I'm not sure about, whereas
+    - [this one](https://www.hl.co.uk/shares/shares-search-results/a/argentina-1-bds-090729-usd1) gets entirely discarded because there's no ticker.
 - The "Sector" classification can occasionally mislabel securities as ETFs particularly when their name contains the word "Fund" or "Income". HL doesn't actually have an ETF-flag so the code attempts to decipher what's what. This works around 98% of the cases.
 
 ## When reporting bugs please specify
