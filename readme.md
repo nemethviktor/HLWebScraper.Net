@@ -40,7 +40,8 @@ On that note the app can only collect stuff that's either visibly available on t
 
 ### Performance
 
-- The whole end-to-end process takes a fair bit of time so be patient. In my one test run the whole thing took in the vicinity of short of an hour.
+- The whole data pull is around 4.5GB but it appears to be capped on the server side somewhere around 15-20MB/sec (that's around 200 megabits/sec).
+- The whole end-to-end process (assuming favourable conditions) takes around 10-15 mins.
 - The app uses a library (`CompressedMemoryCache.cs`) - the licence of that is contained in the file and was built by Gustavo Augusto Hennig (it's APACHE 2.0 btw)
     - It's necessary to use compression on the html pages because storing that many (read: tens of thousands) pages at 200-400kbytes each will eat up memory in no time. My initial tests of letters A-C made the app consume around 5GB RAM w/o compression and sub-1GB w/ compression.
 - I did some testing on what I deem is a 'normal' performance laptop, ie a Ryzen 7 PRO 5850U [8x 4370 MHz] w/ 32 GB RAM - the Release (non-Debug that is) version of the app peaked at 25% CPU and (again) around sub-1GB RAM.

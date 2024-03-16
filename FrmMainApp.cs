@@ -1,7 +1,6 @@
 using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
 using CsvHelper;
 using HLWebScraper.Net.Helpers;
 using HLWebScraper.Net.Model;
@@ -36,12 +35,22 @@ public partial class FrmMainApp : Form
     private KeyValueConfigurationCollection _section = new();
     private CancellationTokenSource cancellationTokenSource;
 
+    private static HttpClient _httpClient = new();
+
     public FrmMainApp()
     {
         cancellationTokenSource = new CancellationTokenSource();
 
         InitializeComponent();
         GetETFTypesFromCSV();
+
+        SocketsHttpHandler socketsHandler = new()
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(value: 2),
+            MaxConnectionsPerServer = 100
+        };
+
+        _httpClient = new HttpClient(handler: socketsHandler);
     }
 
     private void FrmMainApp_Load(object sender, EventArgs e)
@@ -109,7 +118,6 @@ public partial class FrmMainApp : Form
     private static async Task<bool> ReadJsonFXFromWebAsync(FrmMainApp formInstance,
         CancellationToken cancellationToken)
     {
-        WebClient wc = new();
         try
         {
             // Check if cancellation has been requested
@@ -123,7 +131,13 @@ public partial class FrmMainApp : Form
                 appendText: "Contacting FX Data website (http://www.floatrates.com/currency/gbp/)",
                 logMessageType: LogMessageTypes.Info);
 
-            string jsonString = await wc.DownloadStringTaskAsync(address: FxUrl);
+
+            HttpResponseMessage response =
+                await _httpClient.GetAsync(requestUri: FxUrl, cancellationToken: cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            string jsonString = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+
             Dictionary<string, FXCurrency>? currencies =
                 JsonConvert.DeserializeObject<Dictionary<string, FXCurrency>>(value: jsonString);
 
@@ -188,9 +202,12 @@ public partial class FrmMainApp : Form
                     // Check if cancellation has been requested
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    WebClient client = new();
                     string url = "https://www.hl.co.uk/shares/shares-search-results/" + alphabetChar;
-                    respString = await client.DownloadStringTaskAsync(address: url);
+                    HttpResponseMessage response =
+                        await _httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+                    response.EnsureSuccessStatusCode();
+
+                    respString = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
                     timeOutBool = true;
                 }
                 catch (Exception ex)
@@ -254,53 +271,30 @@ public partial class FrmMainApp : Form
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
                 logMessageType: LogMessageTypes.Start);
 
-            // Chunk size for processing tasks
-            const int chunkSize = 50;
-
-            // Create a list to hold the tasks
             List<Task> tasks = new();
 
-            // Iterate over the URLs in chunks
-            for (int i = 0; i < urls.Count; i += chunkSize)
+            // Loop through each URL in the chunk and start scraping
+            foreach (string url in urls)
             {
-                // Get the chunk of URLs
-                IEnumerable<string> chunk = urls.Skip(count: i).Take(count: chunkSize);
+                // Check if cancellation has been requested
+                cancellationToken.ThrowIfCancellationRequested();
 
-                // Create a list to hold the tasks for this chunk
-                List<Task> chunkTasks = new();
+                // Construct the URL with "/company-information" appended
+                string companyInfoUrl = url + "/company-information";
 
-                // Create a new HttpClient for this chunk
-                using HttpClient httpClient = new();
-
-                // Loop through each URL in the chunk and start scraping
-                foreach (string url in chunk)
-                {
-                    // Check if cancellation has been requested
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    // Construct the URL with "/company-information" appended
-                    string companyInfoUrl = url + "/company-information";
-
-                    // Add tasks to scrape the main URL and company info URL
-                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: url,
-                        formInstance: formInstance, cancellationToken: cancellationToken));
-                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: companyInfoUrl,
-                        formInstance: formInstance, cancellationToken: cancellationToken));
-                }
-
-                // Add chunk tasks to the main tasks list
-                tasks.AddRange(collection: chunkTasks);
-
-                // Wait for the chunk tasks to complete or cancellation requested
-                await Task.WhenAll(tasks: chunkTasks);
-
-                // Dispose of the HttpClient to close connections and release resources
-                httpClient.Dispose();
-
+                // Add tasks to scrape the main URL and company info URL
+                tasks.Add(item: GetHtmlAsync(url: url,
+                    formInstance: formInstance, cancellationToken: cancellationToken));
+                tasks.Add(item: GetHtmlAsync(url: companyInfoUrl,
+                    formInstance: formInstance, cancellationToken: cancellationToken));
                 // Break loop if cancellation requested
                 if (cancellationToken.IsCancellationRequested)
                     break;
             }
+
+            // Wait for the chunk tasks to complete or cancellation requested
+            await Task.WhenAll(tasks: tasks);
+
 
             // Scraping completed
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
@@ -315,31 +309,61 @@ public partial class FrmMainApp : Form
         }
     }
 
-    private static async Task GetHtmlAsyncWithClient(HttpClient httpClient, string url, FrmMainApp formInstance,
-        CancellationToken cancellationToken)
+    private static async Task GetHtmlAsync(string url, FrmMainApp formInstance, CancellationToken cancellationToken)
     {
-        // Check if cancellation has been requested
+        // Check if cancellation has been requested before making the request
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Make the HTTP request
-        HttpResponseMessage response = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-        string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+        int maxRetries = 5;
+        int retryCount = 0;
 
-        // Process the HTML content
-        // Page
-        if (!url.Contains(value: "company-info"))
-            urlAndHtmlContentHashtable.AddOrUpdate(key: url,
-                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
-                    text: ReturnPageText(
-                        HTMLTextInHtmlContentHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
-        // Company
-        else
-            urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
-                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
-                    text: ReturnCompanyPageText(
-                        HTMLTextInCompanyInfoHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+        while (retryCount < maxRetries)
+            try
+            {
+                Application.DoEvents();
+                HttpResponseMessage response =
+                    await _httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+                response.EnsureSuccessStatusCode();
+                string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
 
-        IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
+                // Process the HTML content as before
+                if (!url.Contains(value: "company-info"))
+                    urlAndHtmlContentHashtable.AddOrUpdate(key: url,
+                        value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
+                            text: ReturnPageText(
+                                HTMLTextInHtmlContentHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+                else
+                    urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
+                        value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
+                            text: ReturnCompanyPageText(
+                                HTMLTextInCompanyInfoHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+
+                IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
+
+                // If the request succeeds, exit the retry loop
+                return;
+            }
+            catch (OperationCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                Application.DoEvents();
+                // Timeout occurred, increment retry count
+                retryCount++;
+                // Log the timeout error
+                AppendLogWindowText(tbx: formInstance.tbx_Log,
+                    appendText:
+                    $"Timeout occurred while fetching URL '{url}'. Retry attempt {retryCount} of {maxRetries}.");
+            }
+            catch (Exception ex)
+            {
+                // Log other errors but do not retry
+                if (ex is HttpRequestException)
+                    IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: false,
+                        errorMsg: ex.Message);
+                return;
+            }
+
+        // Maximum retry attempts reached, log error and exit
+        AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: $"Maximum retry attempts reached for URL '{url}'.");
     }
 
 
@@ -363,8 +387,8 @@ public partial class FrmMainApp : Form
             {
                 string logMessageVal = $"Parsing {url}";
                 FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
-                AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
-                    logMessageType: LogMessageTypes.Start);
+                //AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
+                //    logMessageType: LogMessageTypes.Start);
 
                 string pageText = HTMLTextInHtmlContentHashtable;
                 string companyPageText = HTMLTextInCompanyInfoHashtable;

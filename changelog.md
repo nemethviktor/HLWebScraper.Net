@@ -1,5 +1,12 @@
 # HLWebscraper.Net Changelog
 
+**Build 88xx [202403xx] ** 
+- NEW & UPDATED:
+  - I've rewritten the HttpClient handling. Should have read up on the documentation beforehand - no more loops!
+  
+- BUGS & FIXES:
+  - N/A
+
 **Build 8840 [20240315] ** 
 - NEW & UPDATED:
   - Added logic to allow for limited selection of scraping targets
