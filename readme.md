@@ -14,6 +14,7 @@ Things this collects (each subject to availability):
 - SEDOL
 - Sector (kinda-custom)
 - ETF_Type (user-defined, see below)
+- Top 10 Exposures (where available, in reality just for some ETFs)
 - Exchange 
 - Country 
 - Indices 

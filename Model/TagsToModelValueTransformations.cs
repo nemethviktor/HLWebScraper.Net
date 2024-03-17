@@ -491,4 +491,54 @@ internal static class TagsToModelValueTransformations
             result: out double openPrice);
         return openPrice;
     }
+
+    /// <summary>
+    ///     Gets the Top 10 Exposures where available
+    /// </summary>
+    /// <param name="pageText"></param>
+    /// <returns></returns>
+    public static string T2M_Top10_Components(string pageText)
+    {
+        string top10components = string.Empty;
+        string likelyComponents = HelperStringUtils.FindTextBetween(
+            pageText: pageText,
+            textStart: "<div id=\"top_10_exposures_data\">",
+            textEnd: "</div>");
+        if (likelyComponents.Contains(value: "No top ten information is available at this stage"))
+            return top10components;
+
+        try
+        {
+            likelyComponents = HelperStringUtils.FindTextBetween(
+                pageText: likelyComponents,
+                textStart: "<tbody>",
+                textEnd: "</tbody>");
+
+            string[] lines = likelyComponents.Split(separator: new[] { '\r', '\n' },
+                options: StringSplitOptions.RemoveEmptyEntries);
+
+
+            foreach (string line in lines)
+                // Check if the line contains table row data
+                if (line.Contains(value: "<tr>"))
+                {
+                    // Extract text from the row (remove HTML tags)
+                    string rowText = RemoveHtmlTags(line: line);
+
+                    top10components += rowText;
+                }
+        }
+        catch
+        {
+            // nothing
+        }
+
+        return top10components;
+
+        string RemoveHtmlTags(string line)
+        {
+            // Remove HTML tags from the line using regular expression
+            return Regex.Replace(input: line, pattern: "<.*?>", replacement: string.Empty).Trim();
+        }
+    }
 }

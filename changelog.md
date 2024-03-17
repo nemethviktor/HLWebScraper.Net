@@ -2,12 +2,18 @@
 
 **Build 88xx [202403xx]** 
 - NEW & UPDATED:
-  - I've rewritten the HttpClient handling. Should have read up on the documentation beforehand - no more loops!
   - Against my better judgement I've moved the "Settings" to a SQLite File in the Roaming folder. This is because
 	- I know SQL (and the dragon isn't sleeping, famous last words there)
 	- It has worked in an another project of mine
 	- I certainly won't overwrite yours accidentially when I publish an updated version of the app
-  
+  - Added a new column for Top 10 Components (Exposure)
+- BUGS & FIXES:
+  - N/A
+
+
+**Build 8841 [20240316]** 
+- NEW & UPDATED:
+  - I've rewritten the HttpClient handling. Should have read up on the documentation beforehand - no more loops!
 - BUGS & FIXES:
   - N/A
 
@@ -26,7 +32,7 @@
   - Changed the logic to exclude items from ETF classification that have > 0 Market Cap. Those are actually companies.
   - Minor fixes.
 
-**Build 8838 [20240313]** 
+**Build 8838 [20240313] [Unreleased]** 
 - NEW & UPDATED:
   - Initial commit. Minor imperfections as one'd expect.
 

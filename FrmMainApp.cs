@@ -251,7 +251,9 @@ public partial class FrmMainApp : Form
                     string href = linkNode.GetAttributeValue(name: "href", def: "");
                 #if DEBUG
                     //List<string> listOfURLsToDebug = new()
-                    //    { "https://www.hl.co.uk/shares/shares-search-results/x/xbt-provider-bitcoin-tracker-one" };
+                    //{
+                    //    "https://www.hl.co.uk/shares/shares-search-results/i/ishares-ii-plc-ftse-epranareit-asia-prop"
+                    //};
                     List<string> listOfURLsToDebug = new();
                     if (href.Contains(value: "/shares/shares-search-results/" + alphabetChar + "/") &&
                         (listOfURLsToDebug.Any(predicate: container => href.Contains(value: container)) ||
@@ -474,6 +476,7 @@ public partial class FrmMainApp : Form
                     GBP_Market_capitalisation = marketCap * gbpEqivalent,
                     Sector = sector,
                     ETF_Type = etfType,
+                    Top10_Components = TagsToModelValueTransformations.T2M_Top10_Components(pageText: pageText),
                     Exchange = TagsToModelValueTransformations.T2M_Exchange(companyPageText: companyPageText),
                     Country = TagsToModelValueTransformations.T2M_Country(companyPageText: companyPageText),
                     Indices = TagsToModelValueTransformations.T2M_Indices(companyPageText: companyPageText)

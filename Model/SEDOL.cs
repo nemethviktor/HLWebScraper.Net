@@ -9,6 +9,7 @@ internal class SEDOL
     public string SEDOL_ID { get; set; }
     public string Sector { get; set; }
     public string ETF_Type { get; set; }
+    public string Top10_Components { get; set; }
     public string Exchange { get; set; }
     public string Country { get; set; }
     public string Indices { get; set; }
@@ -17,8 +18,6 @@ internal class SEDOL
     public double Year_low { get; set; }
     public double Year_high { get; set; }
     public string Dividend_yield { get; set; }
-
-    //double Level_pct 
     public double PE_ratio { get; set; }
     public double Market_capitalisation { get; set; }
     public double Volume { get; set; }

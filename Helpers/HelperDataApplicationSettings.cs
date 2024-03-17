@@ -51,8 +51,7 @@ internal static class HelperDataApplicationSettings
     ///     Similar to the one above (which reads the data) - this one writes it.
     /// </summary>
     /// <param name="tableName">
-    ///     This will generally be "settings" (but could be applayout as well). Remainder of an older
-    ///     design where I had tables for data lined up to be saved
+    ///     This will generally be "settings"
     /// </param>
     /// <param name="settingId">Name of the SettingID for which data is requested</param>
     /// <param name="settingValue">The value to be stored.</param>
