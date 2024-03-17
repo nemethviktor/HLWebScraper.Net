@@ -1,14 +1,14 @@
 # HLWebscraper.Net Changelog
 
-**Build 88xx [202403xx]** 
+**Build 8842 [20240317]** 
 - NEW & UPDATED:
   - Against my better judgement I've moved the "Settings" to a SQLite File in the Roaming folder. This is because
 	- I know SQL (and the dragon isn't sleeping, famous last words there)
 	- It has worked in an another project of mine
 	- I certainly won't overwrite yours accidentially when I publish an updated version of the app
-  - Added a new column for Top 10 Components (Exposure)
+  - Added a new column for Top 10 Exposures
 - BUGS & FIXES:
-  - N/A
+  - I've taken the liberty to replace the "n/a" retuned values with empty string (aka nothing). It takes up less space and the original wasn't particularly useful.
 
 
 **Build 8841 [20240316]** 

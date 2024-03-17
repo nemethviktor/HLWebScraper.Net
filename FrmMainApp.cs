@@ -476,7 +476,7 @@ public partial class FrmMainApp : Form
                     GBP_Market_capitalisation = marketCap * gbpEqivalent,
                     Sector = sector,
                     ETF_Type = etfType,
-                    Top10_Components = TagsToModelValueTransformations.T2M_Top10_Components(pageText: pageText),
+                    Top10_Exposures = TagsToModelValueTransformations.T2M_Top10_Exposures(pageText: pageText),
                     Exchange = TagsToModelValueTransformations.T2M_Exchange(companyPageText: companyPageText),
                     Country = TagsToModelValueTransformations.T2M_Country(companyPageText: companyPageText),
                     Indices = TagsToModelValueTransformations.T2M_Indices(companyPageText: companyPageText)

@@ -9,6 +9,7 @@
 	<ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
 	<ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
 	<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+	 <RuntimeIdentifier>win-x64</RuntimeIdentifier>    
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   <ApplicationManifest>app.manifest</ApplicationManifest>
 
@@ -34,7 +35,6 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="31.0.2" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.59" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0-preview.2.24128.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
   </ItemGroup>
@@ -67,13 +67,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Output\example_HLWebScraper_Output_20240315_192630.csv">
+    <None Update="changelog.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    <None Update="Output\example_HLWebScraper_Output_20240317_112225.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="readme.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+   
   </ItemGroup>
 
 </Project>

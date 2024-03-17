@@ -9,7 +9,7 @@ internal class SEDOL
     public string SEDOL_ID { get; set; }
     public string Sector { get; set; }
     public string ETF_Type { get; set; }
-    public string Top10_Components { get; set; }
+    public string Top10_Exposures { get; set; }
     public string Exchange { get; set; }
     public string Country { get; set; }
     public string Indices { get; set; }

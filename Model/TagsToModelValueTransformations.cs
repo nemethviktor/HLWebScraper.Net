@@ -180,28 +180,50 @@ internal static class TagsToModelValueTransformations
         return "Not classified";
     }
 
+
+    /// <summary>
+    ///     Reads the Exchange list (where available)
+    /// </summary>
+    /// <param name="companyPageText"></param>
+    /// <returns></returns>
     public static string T2M_Exchange(string companyPageText)
     {
-        return HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
+        string likelyExchange = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
             pageText: companyPageText,
             textStart: "Exchange:<dd>",
             textEnd: "</dd>"));
+
+        return likelyExchange == "-" || likelyExchange == "n/a" ? string.Empty : likelyExchange;
     }
 
+    /// <summary>
+    ///     Reads the Country (where available)
+    /// </summary>
+    /// <param name="companyPageText"></param>
+    /// <returns></returns>
     public static string T2M_Country(string companyPageText)
     {
-        return HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
+        string likelyCountry = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
             pageText: companyPageText,
             textStart: "Country:<dd>",
             textEnd: "</dd>"));
+
+        return likelyCountry == "-" || likelyCountry == "n/a" ? string.Empty : likelyCountry;
     }
 
+    /// <summary>
+    ///     Reads the Indices [really, index] (where available)
+    /// </summary>
+    /// <param name="companyPageText"></param>
+    /// <returns></returns>
     public static string T2M_Indices(string companyPageText)
     {
-        return HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
+        string likelyIndex = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
             pageText: companyPageText,
             textStart: "Indices:<dd>",
             textEnd: "</dd>"));
+
+        return likelyIndex == "-" || likelyIndex == "n/a" ? string.Empty : likelyIndex;
     }
 
     /// <summary>
@@ -497,24 +519,24 @@ internal static class TagsToModelValueTransformations
     /// </summary>
     /// <param name="pageText"></param>
     /// <returns></returns>
-    public static string T2M_Top10_Components(string pageText)
+    public static string T2M_Top10_Exposures(string pageText)
     {
-        string top10components = string.Empty;
-        string likelyComponents = HelperStringUtils.FindTextBetween(
+        string top10Exposures = string.Empty;
+        string likelyExposures = HelperStringUtils.FindTextBetween(
             pageText: pageText,
             textStart: "<div id=\"top_10_exposures_data\">",
             textEnd: "</div>");
-        if (likelyComponents.Contains(value: "No top ten information is available at this stage"))
-            return top10components;
+        if (likelyExposures.Contains(value: "No top ten information is available at this stage"))
+            return top10Exposures;
 
         try
         {
-            likelyComponents = HelperStringUtils.FindTextBetween(
-                pageText: likelyComponents,
+            likelyExposures = HelperStringUtils.FindTextBetween(
+                pageText: likelyExposures,
                 textStart: "<tbody>",
                 textEnd: "</tbody>");
 
-            string[] lines = likelyComponents.Split(separator: new[] { '\r', '\n' },
+            string[] lines = likelyExposures.Split(separator: new[] { '\r', '\n' },
                 options: StringSplitOptions.RemoveEmptyEntries);
 
 
@@ -525,7 +547,7 @@ internal static class TagsToModelValueTransformations
                     // Extract text from the row (remove HTML tags)
                     string rowText = RemoveHtmlTags(line: line);
 
-                    top10components += rowText;
+                    top10Exposures += rowText;
                 }
         }
         catch
@@ -533,7 +555,7 @@ internal static class TagsToModelValueTransformations
             // nothing
         }
 
-        return top10components;
+        return top10Exposures;
 
         string RemoveHtmlTags(string line)
         {
