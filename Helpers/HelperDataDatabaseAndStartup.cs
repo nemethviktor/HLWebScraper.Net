@@ -61,9 +61,7 @@ internal static class HelperDataDatabaseAndStartup
         Dictionary<string, string> defaultSettingsDictionary = new()
         {
             { "Theme", "Light" },
-            { "PooledConnectionLifetime", "2" },
-            { "PooledConnectionIdleTimeout", "1" },
-            { "MaxConnectionsPerServer", "100" }
+            { "MaxConnectionsPerServer", "50" }
         };
 
         foreach (KeyValuePair<string, string> keyValuePair in defaultSettingsDictionary)

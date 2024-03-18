@@ -1,5 +1,11 @@
 # HLWebscraper.Net Changelog
 
+**Build 8843 [20240318]** 
+- NEW & UPDATED:
+  - Added a notification handler/icon to inform of process completion.
+- BUGS & FIXES:
+  - Reverted the no-loops-logic introduced in 8841 - it seemingly resulted in timeouts due to rate limiting on the server side whereas the loops don't. This comes at a minor performance penalty but at least doesn't ban the user.
+
 **Build 8842 [20240317]** 
 - NEW & UPDATED:
   - Against my better judgement I've moved the "Settings" to a SQLite File in the Roaming folder. This is because
@@ -9,7 +15,6 @@
   - Added a new column for Top 10 Exposures
 - BUGS & FIXES:
   - I've taken the liberty to replace the "n/a" retuned values with empty string (aka nothing). It takes up less space and the original wasn't particularly useful.
-
 
 **Build 8841 [20240316]** 
 - NEW & UPDATED:

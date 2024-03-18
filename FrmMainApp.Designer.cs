@@ -103,6 +103,7 @@ namespace HLWebScraper.Net
             btn_ReloadCategories = new Button();
             ttp_Sector = new ToolTip(components);
             ttp_ETFType = new ToolTip(components);
+            nic_ProcessFinished = new NotifyIcon(components);
             mns_Main.SuspendLayout();
             tbl_Main.SuspendLayout();
             tcr_Main.SuspendLayout();
@@ -834,6 +835,13 @@ namespace HLWebScraper.Net
             btn_ReloadCategories.UseVisualStyleBackColor = false;
             btn_ReloadCategories.Click += btn_ReloadCategories_Click;
             // 
+            // nic_ProcessFinished
+            // 
+            nic_ProcessFinished.BalloonTipIcon = ToolTipIcon.Info;
+            nic_ProcessFinished.BalloonTipText = "Parsing/Scraping Finished.";
+            nic_ProcessFinished.Icon = (Icon)resources.GetObject("nic_ProcessFinished.Icon");
+            nic_ProcessFinished.Visible = true;
+            // 
             // FrmMainApp
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -946,5 +954,6 @@ namespace HLWebScraper.Net
         private GroupBox gbx_Only;
         private CheckBox ckb_ETFOnlySearch;
         private CheckBox ckb_ISAOnlySearch;
+        private NotifyIcon nic_ProcessFinished;
     }
 }
