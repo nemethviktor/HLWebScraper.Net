@@ -1,10 +1,10 @@
-using System.Diagnostics;
-using System.Globalization;
 using CsvHelper;
 using HLWebScraper.Net.Helpers;
 using HLWebScraper.Net.Model;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Globalization;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 #pragma warning disable CA1416
@@ -15,17 +15,17 @@ public partial class FrmMainApp : Form
 {
     private const string FxUrl = "https://www.floatrates.com/daily/gbp.json";
     private const string Not_ETF_ETFType = "## Not ETF";
-    internal static readonly FXCurrencyCollection FxCurrencies = new();
+    internal static readonly FXCurrencyCollection FxCurrencies = [];
     private static char[] selectedAlphabet;
 
-    private static readonly HashSet<string> UrlListOfStocksAndShares = new();
+    private static readonly HashSet<string> UrlListOfStocksAndShares = [];
     private static readonly CompressedMemoryCache urlAndHtmlContentHashtable = new();
     private static readonly CompressedMemoryCache urlAndCompanyInfoHashtable = new();
 
     private static int _urlCounter;
     private static readonly object urlCounterLock = new();
 
-    private static readonly HashSet<SEDOL> SEDOLs = new();
+    private static readonly HashSet<SEDOL> SEDOLs = [];
 
     internal static IEnumerable<ETFType>? ETF_Types;
 
@@ -54,7 +54,10 @@ public partial class FrmMainApp : Form
     private void FrmMainApp_Load(object sender, EventArgs e)
     {
         if (HelperDataApplicationSettings.DataReadSQLiteSettings(tableName: "settings",
-                settingId: "Theme") == "Dark") tsmi_DarkishMode.PerformClick();
+                settingId: "Theme") == "Dark")
+        {
+            tsmi_DarkishMode.PerformClick();
+        }
 
         btn_StartScrape.Enabled = true;
         btn_Stop.Enabled = false;
@@ -62,15 +65,17 @@ public partial class FrmMainApp : Form
         btn_SaveToCSV.Enabled = false;
         tpg_Overview.Enabled = false;
 
-    #if DEBUG
+#if DEBUG
         lbx_Alphabet.SetSelected(index: lbx_Alphabet.FindStringExact(s: "y"), value: true);
-    #else
+#else
         for (int i = 0; i < lbx_Alphabet.Items.Count; i++)
+        {
             lbx_Alphabet.SetSelected(index: i, value: true);
-    #endif
+        }
+#endif
     }
 
-#region Overview Tab
+    #region Overview Tab
 
     /// <summary>
     ///     Fills (and refills/adjusts) the cbx dropdown's text options
@@ -89,7 +94,7 @@ public partial class FrmMainApp : Form
                                       .ToList();
 
         // Create a BindingSource
-        BindingSource bindingSource = new();
+        BindingSource bindingSource = [];
 
         // Assign the data source to the binding source
         bindingSource.DataSource = sedolList;
@@ -102,9 +107,9 @@ public partial class FrmMainApp : Form
         cbx_Securities.ValueMember = "SEDOL_ID";
     }
 
-#endregion
+    #endregion
 
-#region Scrape & Parse
+    #region Scrape & Parse
 
     /// <summary>
     ///     Pulls the FX info and deserialises the JSON output
@@ -131,7 +136,7 @@ public partial class FrmMainApp : Form
 
             HttpResponseMessage response =
                 await HttpClient.GetAsync(requestUri: FxUrl, cancellationToken: cancellationToken);
-            response.EnsureSuccessStatusCode();
+            _ = response.EnsureSuccessStatusCode();
 
             string jsonString = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
 
@@ -152,8 +157,8 @@ public partial class FrmMainApp : Form
         }
         catch (Exception ex)
         {
-            if (ex is OperationCanceledException ||
-                ex is TaskCanceledException)
+            if (ex is OperationCanceledException or
+                TaskCanceledException)
             {
                 // Operation was cancelled
                 AppendLogWindowText(tbx: formInstance.tbx_Log,
@@ -194,6 +199,7 @@ public partial class FrmMainApp : Form
             string respString = string.Empty;
 
             while (!timeOutBool)
+            {
                 try
                 {
                     // Check if cancellation has been requested
@@ -209,8 +215,8 @@ public partial class FrmMainApp : Form
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException ||
-                        ex is TaskCanceledException)
+                    if (ex is OperationCanceledException or
+                        TaskCanceledException)
                     {
                         // Operation was cancelled
                         AppendLogWindowText(tbx: formInstance.tbx_Log,
@@ -224,6 +230,7 @@ public partial class FrmMainApp : Form
                         logMessageType: LogMessageTypes.Error);
                     return;
                 }
+            }
 
             HtmlDocument doc = new();
             doc.LoadHtml(html: respString);
@@ -231,24 +238,30 @@ public partial class FrmMainApp : Form
             HtmlNodeCollection? linkNodes = doc.DocumentNode.SelectNodes(xpath: "//a[@href]");
 
             if (linkNodes != null)
+            {
                 foreach (HtmlNode? linkNode in linkNodes)
                 {
                     string href = linkNode.GetAttributeValue(name: "href", def: "");
-                #if DEBUG
+#if DEBUG
                     //List<string> listOfURLsToDebug = new()
                     //{
                     //    "https://www.hl.co.uk/shares/shares-search-results/i/ishares-ii-plc-ftse-epranareit-asia-prop"
                     //};
-                    List<string> listOfURLsToDebug = new();
+                    List<string> listOfURLsToDebug = [];
                     if (href.Contains(value: "/shares/shares-search-results/" + alphabetChar + "/") &&
-                        (listOfURLsToDebug.Any(predicate: container => href.Contains(value: container)) ||
+                        (listOfURLsToDebug.Any(predicate: href.Contains) ||
                          listOfURLsToDebug.Count == 0))
+                    {
                         UrlListOfStocksAndShares.Add(item: href);
-                #else
+                    }
+#else
                     if (href.Contains(value: "/shares/shares-search-results/" + alphabetChar + "/"))
+                    {
                         UrlListOfStocksAndShares.Add(item: href);
-                #endif
+                    }
+#endif
                 }
+            }
         }
 
         AppendLogWindowText(tbx: formInstance.tbx_Log,
@@ -274,7 +287,7 @@ public partial class FrmMainApp : Form
             int chunkSize = _maxConnectionsPerServerSetting;
 
             // Create a list to hold the tasks
-            List<Task> tasks = new();
+            List<Task> tasks = [];
 
             // Iterate over the URLs in chunks
             for (int i = 0; i < urls.Count; i += chunkSize)
@@ -283,7 +296,7 @@ public partial class FrmMainApp : Form
                 IEnumerable<string> chunk = urls.Skip(count: i).Take(count: chunkSize);
 
                 // Create a list to hold the tasks for this chunk
-                List<Task> chunkTasks = new();
+                List<Task> chunkTasks = [];
 
                 // Create a new HttpClient for this chunk
                 using HttpClient httpClient = new();
@@ -315,14 +328,16 @@ public partial class FrmMainApp : Form
 
                 // Break loop if cancellation requested
                 if (cancellationToken.IsCancellationRequested)
+                {
                     break;
+                }
             }
 
             // Scraping completed
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
                 logMessageType: LogMessageTypes.Done);
         }
-        catch (Exception ex) when (ex is OperationCanceledException || ex is TaskCanceledException)
+        catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
         {
             // Tasks were cancelled
             AppendLogWindowText(tbx: formInstance.tbx_Log,
@@ -344,16 +359,20 @@ public partial class FrmMainApp : Form
         // Process the HTML content
         // Page
         if (!url.Contains(value: "company-info"))
+        {
             urlAndHtmlContentHashtable.AddOrUpdate(key: url,
                 value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
                     text: ReturnPageText(
                         HTMLTextInHtmlContentHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+        }
         // Company
         else
+        {
             urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
                 value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
                     text: ReturnCompanyPageText(
                         HTMLTextInCompanyInfoHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+        }
 
         IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
     }
@@ -420,15 +439,12 @@ public partial class FrmMainApp : Form
                         currSign: currSign);
 
                 // this is a bit tricky. bonds & trusts don't _really_ have a corporate page so i have to trick around this stuff
-                string sector;
-                if (pageText.Contains(value: "More about bond pricing here"))
-                    sector = "Bond";
-                else if (pageText.Contains(value: "Trust&nbsp;<br/>info"))
-                    sector = "Trust";
-                else
-                    sector = TagsToModelValueTransformations.T2M_Sector(companyPageText: companyPageText,
+                string sector = pageText.Contains(value: "More about bond pricing here")
+                    ? "Bond"
+                    : pageText.Contains(value: "Trust&nbsp;<br/>info")
+                    ? "Trust"
+                    : TagsToModelValueTransformations.T2M_Sector(companyPageText: companyPageText,
                         securityNameLowerCase: name, ticker: ticker, marketCapOverZero: marketCap > 0);
-
                 string etfType = !sector.Contains(value: "ETF")
                     ? Not_ETF_ETFType
                     : TagsToModelValueTransformations.T2M_ETF_Type(name: name);
@@ -509,8 +525,10 @@ public partial class FrmMainApp : Form
                     comparisonType: StringComparison.Ordinal);
                 if (charToFindStart != -1 &&
                     charToFindEnd != -1)
+                {
                     pageText = pageText.Remove(startIndex: charToFindStart,
                         count: charToFindEnd - charToFindStart + 1);
+                }
             }
         }
 
@@ -539,7 +557,10 @@ public partial class FrmMainApp : Form
         {
             charToFindStart = trimmedText.IndexOf(value: "<strong>Short code:</strong>",
                 comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1) crapIndicator = true;
+            if (charToFindStart == -1)
+            {
+                crapIndicator = true;
+            }
         }
 
         if (!crapIndicator)
@@ -555,7 +576,10 @@ public partial class FrmMainApp : Form
             charToFindStart =
                 trimmedText.IndexOf(value: "<strong>Sector:</strong>", startIndex: charToFindEnd,
                     comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1) crapIndicator = true;
+            if (charToFindStart == -1)
+            {
+                crapIndicator = true;
+            }
         }
 
         if (!crapIndicator)
@@ -571,7 +595,10 @@ public partial class FrmMainApp : Form
             charToFindStart =
                 trimmedText.IndexOf(value: "<strong>Exchange:</strong>", startIndex: charToFindEnd,
                     comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1) crapIndicator = true;
+            if (charToFindStart == -1)
+            {
+                crapIndicator = true;
+            }
         }
 
         if (!crapIndicator)
@@ -587,7 +614,10 @@ public partial class FrmMainApp : Form
             charToFindStart =
                 trimmedText.IndexOf(value: "<strong>Country:</strong>", startIndex: charToFindEnd,
                     comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1) crapIndicator = true;
+            if (charToFindStart == -1)
+            {
+                crapIndicator = true;
+            }
         }
 
         if (!crapIndicator)
@@ -603,7 +633,10 @@ public partial class FrmMainApp : Form
             charToFindStart =
                 trimmedText.IndexOf(value: "<strong>Indices:</strong>", startIndex: charToFindEnd,
                     comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1) crapIndicator = true;
+            if (charToFindStart == -1)
+            {
+                crapIndicator = true;
+            }
         }
 
         if (!crapIndicator)
@@ -614,7 +647,10 @@ public partial class FrmMainApp : Form
                 length: charToFindEnd - charToFindStart + "</dd>".Length);
         }
 
-        if (crapIndicator) pageText += "Crap Data";
+        if (crapIndicator)
+        {
+            pageText += "Crap Data";
+        }
 
         pageText = pageText.Replace(oldValue: "<strong>", newValue: "")
                            .Replace(oldValue: "</strong>", newValue: "");
@@ -623,11 +659,11 @@ public partial class FrmMainApp : Form
         return pageText;
     }
 
-#endregion
+    #endregion
 
-#region Events
+    #region Events
 
-#region Generic
+    #region Generic
 
     /// <summary>
     ///     Fires the process to save the findings to a CSV
@@ -647,7 +683,7 @@ public partial class FrmMainApp : Form
     private void btn_ReloadCategories_Click(object sender, EventArgs e)
     {
         GetETFTypesFromCSV();
-        MessageBox.Show(text: "Categories reloaded.");
+        _ = MessageBox.Show(text: "Categories reloaded.");
         foreach (SEDOL sedol in SEDOLs)
         {
             string name = sedol.Name;
@@ -665,7 +701,7 @@ public partial class FrmMainApp : Form
     private void tsm_About_Click(object sender, EventArgs e)
     {
         FrmAboutBox frmAboutBox = new();
-        frmAboutBox.ShowDialog();
+        _ = frmAboutBox.ShowDialog();
     }
 
     /// <summary>
@@ -677,13 +713,14 @@ public partial class FrmMainApp : Form
     {
         // copy the Example file if "normal" doesn't exist.
         if (!File.Exists(path: Path.Combine(path1: HelperVariables.GetResourcesFolderString(), path2: "ETF_Types.csv")))
+        {
             File.Copy(
                 sourceFileName: Path.Combine(path1: HelperVariables.GetResourcesFolderString(),
                     path2: "ETF_Types_Example.csv"),
                 destFileName: Path.Combine(path1: HelperVariables.GetResourcesFolderString(), path2: "ETF_Types.csv"));
+        }
 
-
-        new Process
+        _ = new Process
         {
             StartInfo = new ProcessStartInfo(fileName: Path.Combine(path1: HelperVariables.GetResourcesFolderString(),
                 path2: "ETF_Types.csv"))
@@ -709,9 +746,9 @@ public partial class FrmMainApp : Form
         HelperDataApplicationSettings.DataVacuumDatabase();
     }
 
-#endregion
+    #endregion
 
-#region tpg_ScrapeMainGrid
+    #region tpg_ScrapeMainGrid
 
     /// <summary>
     ///     Commences the scrape
@@ -741,12 +778,18 @@ public partial class FrmMainApp : Form
             cancellationTokenSource = new CancellationTokenSource();
 
             if (await ReadJsonFXFromWebAsync(formInstance: this, cancellationToken: cancellationTokenSource.Token))
+            {
                 await CollateHLStocksByLetterAsync(formInstance: this,
                     cancellationToken: cancellationTokenSource.Token);
+            }
 
             foreach (SEDOL? newSedol in UrlListOfStocksAndShares.Select(selector: CreateSEDOL).OfType<SEDOL>())
+            {
                 if (!string.IsNullOrWhiteSpace(value: newSedol?.SEDOL_ID))
-                    SEDOLs.Add(item: newSedol);
+                {
+                    _ = SEDOLs.Add(item: newSedol);
+                }
+            }
 
             btn_StartScrape.Enabled = true;
             btn_Stop.Enabled = false;
@@ -775,7 +818,7 @@ public partial class FrmMainApp : Form
         }
         else
         {
-            MessageBox.Show(text: "You do need to select at least one character you know.",
+            _ = MessageBox.Show(text: "You do need to select at least one character you know.",
                 caption: "Nothing selected.",
                 buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Warning);
         }
@@ -792,8 +835,10 @@ public partial class FrmMainApp : Form
         // Check if cancellationTokenSource is initialized and if there's an ongoing task
         if (cancellationTokenSource != null &&
             !cancellationTokenSource.IsCancellationRequested)
+        {
             // Cancel the ongoing tasks
             cancellationTokenSource.Cancel();
+        }
 
         btn_StartScrape.Enabled = true;
         btn_Stop.Enabled = false;
@@ -801,9 +846,9 @@ public partial class FrmMainApp : Form
         btn_SaveToCSV.Enabled = false;
     }
 
-#endregion
+    #endregion
 
-#region tpg_Overview
+    #region tpg_Overview
 
     private void tpg_Overview_Enter(object sender, EventArgs e)
     {
@@ -843,7 +888,7 @@ public partial class FrmMainApp : Form
                 ckb_ISA.Checked = sedol.Is_ISA_Compatible;
                 ckb_ISA.Text = $"{(sedol.Is_ISA_Compatible ? "Can" : "Can't")} be held in an ISA";
                 llb_URL.Links.Clear();
-                llb_URL.Links.Add(start: 0, length: 3, linkData: sedol.URL);
+                _ = llb_URL.Links.Add(start: 0, length: 3, linkData: sedol.URL);
                 tbx_Sector.Text = sedol.Sector;
                 tbx_ETFType.Text = sedol.ETF_Type;
                 tbx_Country.Text = sedol.Country;
@@ -872,15 +917,17 @@ public partial class FrmMainApp : Form
     private void llb_URL_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
     {
         if (e.Link != null)
-            Process.Start(startInfo: new ProcessStartInfo(fileName: e.Link.LinkData.ToString())
-                { UseShellExecute = true });
+        {
+            _ = Process.Start(startInfo: new ProcessStartInfo(fileName: e.Link.LinkData.ToString())
+            { UseShellExecute = true });
+        }
     }
 
-#endregion
+    #endregion
 
-#endregion
+    #endregion
 
-#region Utils
+    #region Utils
 
     /// <summary>
     ///     Puts text into the log window (append)
@@ -895,7 +942,7 @@ public partial class FrmMainApp : Form
 
         if (tbx.InvokeRequired)
         {
-            tbx.Invoke(method: (MethodInvoker)delegate
+            _ = tbx.Invoke(method: (MethodInvoker)delegate
             {
                 tbx.AppendText(text: DateTime.Now + " - " + messageType + appendText +
                                      Environment.NewLine);
@@ -927,13 +974,17 @@ public partial class FrmMainApp : Form
         {
             _urlCounter++;
             if (isSuccess)
+            {
                 AppendLogWindowText(tbx: formInstance.tbx_Log,
                     appendText: $"{_urlCounter} of {UrlListOfStocksAndShares.Count * 2} items scraped - {url}.",
                     logMessageType: LogMessageTypes.None);
+            }
             else
+            {
                 AppendLogWindowText(tbx: formInstance.tbx_Log,
                     appendText: $"Error fetching URL '{url}': {errorMsg}",
                     logMessageType: LogMessageTypes.Error);
+            }
         }
     }
 
@@ -1042,9 +1093,9 @@ public partial class FrmMainApp : Form
             ColorTranslator.FromHtml(htmlColor: "#404040");
     }
 
-#endregion
+    #endregion
 
-#region CSV
+    #region CSV
 
     /// <summary>
     ///     Loads the ETF_Types from the CSV file
@@ -1056,8 +1107,10 @@ public partial class FrmMainApp : Form
         string ETF_TypesCSVPath = File.Exists(path: Path.Combine(path1: resourcesFolder, path2: "ETF_Types.csv"))
             ? Path.Combine(path1: resourcesFolder, path2: "ETF_Types.csv")
             : Path.Combine(path1: resourcesFolder, path2: "ETF_Types_Example.csv");
-        using StreamReader reader = new(path: ETF_TypesCSVPath);
-        using CsvReader csv = new(reader: reader, culture: CultureInfo.InvariantCulture);
+
+        using FileStream stream = new(ETF_TypesCSVPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using StreamReader reader = new(stream);
+        using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
         ETF_Types = csv.GetRecords<ETFType>().ToList();
     }
 
@@ -1068,7 +1121,7 @@ public partial class FrmMainApp : Form
     {
         string outputFolder = Path.Combine(path1: AppDomain.CurrentDomain.BaseDirectory,
             path2: "Output");
-        Directory.CreateDirectory(path: outputFolder);
+        _ = Directory.CreateDirectory(path: outputFolder);
 
         string nowDTStr = DateTime.Now.ToString(format: "yyyyMMdd_HHmmss");
 
@@ -1077,25 +1130,33 @@ public partial class FrmMainApp : Form
         if (cbx_Securities.Items.Count > 0 &&
             cbx_Securities.Items.Count < SEDOLs.Count &&
             tcr_Main.SelectedTab == tpg_Overview)
+        {
             dialogResult = MessageBox.Show(text: "Only export filtered items?",
                 caption: "Filters are active.",
                 buttons: MessageBoxButtons.YesNoCancel, icon: MessageBoxIcon.Question);
+        }
 
-        List<SEDOL> sedolList = new();
+        List<SEDOL> sedolList = [];
         if (dialogResult == DialogResult.Yes)
         {
             foreach (object item in cbx_Securities.Items)
+            {
                 if (item is SEDOL selectedSEDOL)
+                {
                     sedolList.Add(item: selectedSEDOL);
+                }
+            }
         }
         else if (dialogResult == DialogResult.No)
         {
             foreach (SEDOL sedol in SEDOLs)
-
+            {
                 sedolList.Add(item: sedol);
+            }
         }
 
         if (dialogResult != DialogResult.Cancel)
+        {
             try
             {
                 using StreamWriter writer =
@@ -1112,19 +1173,20 @@ public partial class FrmMainApp : Form
                 }
 
                 writer.Flush();
-                MessageBox.Show(text: $"Finished writing the CSV file - HLWebScraper_Output_{nowDTStr}.csv",
+                _ = MessageBox.Show(text: $"Finished writing the CSV file - HLWebScraper_Output_{nowDTStr}.csv",
                     caption: "Ok writing CSV",
                     buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(text: $"Failed to write the CSV file - {ex.Message}", caption: "Error writing CSV",
+                _ = MessageBox.Show(text: $"Failed to write the CSV file - {ex.Message}", caption: "Error writing CSV",
                     buttons: MessageBoxButtons.OK,
                     icon: MessageBoxIcon.Error);
             }
+        }
     }
 
-#endregion
+    #endregion
 }
 
 internal enum LogMessageTypes

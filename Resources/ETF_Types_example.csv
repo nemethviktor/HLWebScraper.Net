@@ -8,7 +8,7 @@ Energy Div,Utilities
 Energy Longer,Utilities
 (AIGE),Utilities
 Luxury,Luxury
-ESG,ESG
+ESG,ESG & Woke
 Leader,Banking & Financials
 Financ,Banking & Financials
 Industr,Industry
@@ -96,6 +96,7 @@ Sustainable,Sustainable
 Africa,Regional
 Austral,Regional
 Turkey,Regional
+Equality,ESG & Woke
 Value,Portfolios: Quality
 Minimum Volatility,Minimum Volatility
 Min Vol,Minimum Volatility
@@ -177,9 +178,9 @@ alphabet,Company Specific
 microsoft,Company Specific
 visa,Company Specific
 netflix,Company Specific
-ageing,ESG
-gender,ESG
-social,ESG
+ageing,ESG & Woke
+gender,ESG & Woke
+social,ESG & Woke
 Core,Portfolios: Core
 greece,Regional
 gilt,Gilts
@@ -206,3 +207,12 @@ S&amp;P,Index
 Bund,Bonds
 Nasdaq,Index
 Inflation,Inflation
+defense,Military
+defence,Military
+Funds,Funds
+AI,Cloud & AI & IT
+Quantum,Cloud & AI & IT
+Global,World
+World,World
+Oil ETC,ETC - Oil & Gas
+Web 3,Cloud & AI & IT

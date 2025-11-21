@@ -22,9 +22,6 @@ internal static class TagsToModelValueTransformations
             : nameViaH1H1);
     }
 
-    //public static bool T2M_Is_ISA_Compatible(string pageText)
-    //{
-    //}
 
     /// <summary>
     ///     Gets the ticker if one's available
@@ -545,7 +542,7 @@ internal static class TagsToModelValueTransformations
                 if (line.Contains(value: "<tr>"))
                 {
                     // Extract text from the row (remove HTML tags)
-                    string rowText = RemoveHtmlTags(line: line);
+                    string rowText = HelperStringUtils.ClearUTFChars(input: RemoveHtmlTags(line: line));
 
                     top10Exposures += rowText;
                 }

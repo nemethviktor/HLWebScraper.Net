@@ -19,17 +19,13 @@ Things this collects (each subject to availability):
 - Country 
 - Indices 
 - Currency 
-- Open_price 
-- Year_low 
-- Year_high 
-- Dividend_yield 
-- PE_ratio 
-- Market_capitalisation 
+- Open price (orig Currency and GBP)
+- Year low (orig Currency and GBP)
+- Year high (orig Currency and GBP)
+- Dividend yield 
+- PE ratio 
+- Market capitalisation (orig Currency and GBP, not available for ETFs)
 - Volume 
-- GBP_Open 
-- GBP_Year_low 
-- GBP_Year_high 
-- GBP_Market_capitalisation 
 
 As mentioned above the app doesn't pull Funds. The main reason behind this is that there's an API for Funds and so you can use Postman for that but there's no public API for stocks and whatnots so it's very difficult to analyse what to invest in.
 On that note the app can only collect stuff that's either visibly available on the site or is at least in the source code of the HTML data - that is to say I don't mind entertaining feature requests but I can only pull what's "there". Also note some of the results that are returned can be blanks. Again that's just what the website contains.

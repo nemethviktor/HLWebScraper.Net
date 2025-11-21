@@ -1,5 +1,11 @@
 # HLWebscraper.Net Changelog
 
+**Build 9456 [20251121]** 
+- NEW & UPDATED:
+  - Updated packages
+- BUGS & FIXES:
+  - Updated logic to open the classification CSV as read-only so the app doesn't crash if it's open elsewhere
+
 **Build 8843 [20240318]** 
 - NEW & UPDATED:
   - Added a notification handler/icon to inform of process completion.
