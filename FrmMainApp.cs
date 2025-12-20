@@ -5,6 +5,7 @@ using HtmlAgilityPack;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Globalization;
+using WinFormsDarkThemerNinja;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 #pragma warning disable CA1416
@@ -1012,11 +1013,14 @@ public partial class FrmMainApp : Form
         }
 
         // adds colour/theme
-
-        HelperControlThemeManager.SetThemeColour(
-            themeColour: HelperVariables.UserSettingUseDarkMode
-                ? ThemeColour.Dark
-                : ThemeColour.Light, parentControl: this);
+        _ = new WinFormsDarkThemerNinja.Themer();
+        Themer.DarkColor = ColorTranslator.FromHtml("#2B2D31");
+        Themer.ApplyThemeToControl(
+            control: this,
+            themeStyle: HelperVariables.UserSettingUseDarkMode ?
+            Themer.ThemeStyle.Custom :
+            Themer.ThemeStyle.Default
+            );
     }
 
 

@@ -1,7 +1,8 @@
-﻿using System.Diagnostics;
+﻿using HLWebScraper.Net.Helpers;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
-using HLWebScraper.Net.Helpers;
+using Themer = WinFormsDarkThemerNinja.Themer;
 
 #pragma warning disable CA1416
 
@@ -19,9 +20,12 @@ internal partial class FrmAboutBox : Form
     {
         InitializeComponent();
         rtb_AboutBox.LinkClicked += rtb_AboutBox_LinkClicked;
-        HelperControlThemeManager.SetThemeColour(themeColour: HelperVariables.UserSettingUseDarkMode
-            ? ThemeColour.Dark
-            : ThemeColour.Light, parentControl: this);
+        Themer.ApplyThemeToControl(
+            control: this,
+            themeStyle: HelperVariables.UserSettingUseDarkMode ?
+            Themer.ThemeStyle.Custom :
+            Themer.ThemeStyle.Default
+            );
 
 
         // via https://stackoverflow.com/a/1601079/3968494
@@ -29,15 +33,15 @@ internal partial class FrmAboutBox : Form
                                   .GetName()
                                   .Version ?? throw new InvalidOperationException();
         DateTime buildDateTime = new DateTime(year: 2000, month: 1, day: 1).Add(value: new TimeSpan(
-            ticks: TimeSpan.TicksPerDay * version.Build + // days since 1 January 2000
-                   TimeSpan.TicksPerSecond * 2 *
-                   version.Revision)); // seconds since midnight, (multiply by 2 to get original)
+            ticks: (TimeSpan.TicksPerDay * version.Build) + // days since 1 January 2000
+                   (TimeSpan.TicksPerSecond * 2 *
+                   version.Revision))); // seconds since midnight, (multiply by 2 to get original)
 
         Text = AssemblyTitle;
 
         tbx_Description.Text = AssemblyDescription;
-        List<(string text, string link)> aboutBoxEntries = new()
-        {
+        List<(string text, string link)> aboutBoxEntries =
+        [
             (AssemblyTitle, null),
             ("Version/Build: " +
              Assembly.GetExecutingAssembly()
@@ -50,8 +54,11 @@ internal partial class FrmAboutBox : Form
             ("Written by: " + AssemblyCompany, null),
             ("Paypal: ", "https://paypal.me/NemethV"),
             ("GitHub: ", "https://github.com/nemethviktor/HLWebScraper.Net")
-        };
-        foreach ((string text, string link) in aboutBoxEntries) AppendText(box: rtb_AboutBox, text: text, link: link);
+        ];
+        foreach ((string text, string link) in aboutBoxEntries)
+        {
+            AppendText(box: rtb_AboutBox, text: text, link: link);
+        }
     }
 
 
@@ -78,11 +85,11 @@ internal partial class FrmAboutBox : Form
         LinkClickedEventArgs e)
     {
         Debug.Assert(condition: e.LinkText != null, message: "e.LinkText != null");
-        Process.Start(startInfo: new ProcessStartInfo { FileName = e.LinkText, UseShellExecute = true });
+        _ = Process.Start(startInfo: new ProcessStartInfo { FileName = e.LinkText, UseShellExecute = true });
     }
 
 
-#region Assembly Attribute Accessors
+    #region Assembly Attribute Accessors
 
     /// <summary>
     ///     Gets the title of the assembly currently executing.
@@ -100,7 +107,10 @@ internal partial class FrmAboutBox : Form
             if (attributes.Length > 0)
             {
                 AssemblyTitleAttribute titleAttribute = (AssemblyTitleAttribute)attributes[0];
-                if (titleAttribute.Title != "") return titleAttribute.Title;
+                if (titleAttribute.Title != "")
+                {
+                    return titleAttribute.Title;
+                }
             }
 
             return Path.GetFileNameWithoutExtension(path: Assembly.GetExecutingAssembly()
@@ -123,9 +133,7 @@ internal partial class FrmAboutBox : Form
             object[] attributes = Assembly.GetExecutingAssembly()
                                           .GetCustomAttributes(attributeType: typeof(AssemblyDescriptionAttribute),
                                                inherit: false);
-            if (attributes.Length == 0) return "";
-
-            return ((AssemblyDescriptionAttribute)attributes[0]).Description;
+            return attributes.Length == 0 ? "" : ((AssemblyDescriptionAttribute)attributes[0]).Description;
         }
     }
 
@@ -142,9 +150,7 @@ internal partial class FrmAboutBox : Form
             object[] attributes = Assembly.GetExecutingAssembly()
                                           .GetCustomAttributes(attributeType: typeof(AssemblyProductAttribute),
                                                inherit: false);
-            if (attributes.Length == 0) return "";
-
-            return ((AssemblyProductAttribute)attributes[0]).Product;
+            return attributes.Length == 0 ? "" : ((AssemblyProductAttribute)attributes[0]).Product;
         }
     }
 
@@ -161,9 +167,7 @@ internal partial class FrmAboutBox : Form
             object[] attributes = Assembly.GetExecutingAssembly()
                                           .GetCustomAttributes(attributeType: typeof(AssemblyCopyrightAttribute),
                                                inherit: false);
-            if (attributes.Length == 0) return "";
-
-            return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
+            return attributes.Length == 0 ? "" : ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
         }
     }
 
@@ -181,11 +185,9 @@ internal partial class FrmAboutBox : Form
             object[] attributes = Assembly.GetExecutingAssembly()
                                           .GetCustomAttributes(attributeType: typeof(AssemblyCompanyAttribute),
                                                inherit: false);
-            if (attributes.Length == 0) return "";
-
-            return ((AssemblyCompanyAttribute)attributes[0]).Company;
+            return attributes.Length == 0 ? "" : ((AssemblyCompanyAttribute)attributes[0]).Company;
         }
     }
 
-#endregion
+    #endregion
 }
