@@ -3,6 +3,8 @@
 Most of all please note that this product is neither affiliated with nor endorsed by HL. That's also to say I didn't include their logo in the About box as I presume that's a trademarked thing. 
 The usual caveats apply: I take no responsibility for whatever outcome you encounter through using this app and none of what's presented in the app is financial advice.
 
+[![Github All Releases](https://img.shields.io/github/downloads/nemethviktor/hlwebscraper.net/total.svg)]()
+
 ## Software Description
 
 The aim of this app is to collate all (viable) securities (not funds) from the HL website and allow for some form of personal (user-based) classification. At the end of the process the data can be saved into a CSV for further processing.

@@ -139,7 +139,7 @@ namespace HLWebScraper.Net
             // 
             tsmi_EditCategorisationCSV.Image = Properties.Resources.CsvDelimited001_svg;
             tsmi_EditCategorisationCSV.Name = "tsmi_EditCategorisationCSV";
-            tsmi_EditCategorisationCSV.Size = new Size(169, 22);
+            tsmi_EditCategorisationCSV.Size = new Size(171, 22);
             tsmi_EditCategorisationCSV.Text = "Edit ETF_Types.csv";
             tsmi_EditCategorisationCSV.ToolTipText = "This will open the ETF_Types.csv in your external editor (Excel, Notepad, whatever). \r\nDon't forget to save the file & Reload (top right button)!";
             tsmi_EditCategorisationCSV.Click += tsmi_EditCategorisationCSV_Click;
@@ -148,7 +148,7 @@ namespace HLWebScraper.Net
             // 
             tsmi_DarkishMode.CheckOnClick = true;
             tsmi_DarkishMode.Name = "tsmi_DarkishMode";
-            tsmi_DarkishMode.Size = new Size(169, 22);
+            tsmi_DarkishMode.Size = new Size(171, 22);
             tsmi_DarkishMode.Text = "Dark(ish) Mode";
             tsmi_DarkishMode.Click += tsmi_DarkishMode_Click;
             // 
@@ -539,7 +539,7 @@ namespace HLWebScraper.Net
             ckb_ETFOnlySearch.AutoSize = true;
             ckb_ETFOnlySearch.Location = new Point(81, 21);
             ckb_ETFOnlySearch.Name = "ckb_ETFOnlySearch";
-            ckb_ETFOnlySearch.Size = new Size(44, 19);
+            ckb_ETFOnlySearch.Size = new Size(45, 19);
             ckb_ETFOnlySearch.TabIndex = 10;
             ckb_ETFOnlySearch.Text = "ETF";
             ckb_ETFOnlySearch.UseVisualStyleBackColor = true;
@@ -678,7 +678,7 @@ namespace HLWebScraper.Net
             label1.AutoSize = true;
             label1.Location = new Point(189, 94);
             label1.Name = "label1";
-            label1.Size = new Size(58, 15);
+            label1.Size = new Size(57, 15);
             label1.TabIndex = 11;
             label1.Text = "Exchange";
             // 
@@ -706,7 +706,7 @@ namespace HLWebScraper.Net
             lbl_ETFType.AutoSize = true;
             lbl_ETFType.Location = new Point(13, 160);
             lbl_ETFType.Name = "lbl_ETFType";
-            lbl_ETFType.Size = new Size(52, 15);
+            lbl_ETFType.Size = new Size(54, 15);
             lbl_ETFType.TabIndex = 22;
             lbl_ETFType.Text = "ETF Type";
             // 
@@ -776,7 +776,7 @@ namespace HLWebScraper.Net
             lbl_Ticker.AutoSize = true;
             lbl_Ticker.Location = new Point(13, 58);
             lbl_Ticker.Name = "lbl_Ticker";
-            lbl_Ticker.Size = new Size(38, 15);
+            lbl_Ticker.Size = new Size(39, 15);
             lbl_Ticker.TabIndex = 14;
             lbl_Ticker.Text = "Ticker";
             // 
@@ -786,9 +786,9 @@ namespace HLWebScraper.Net
             ckb_ISA.Enabled = false;
             ckb_ISA.Location = new Point(15, 93);
             ckb_ISA.Name = "ckb_ISA";
-            ckb_ISA.Size = new Size(67, 19);
+            ckb_ISA.Size = new Size(43, 19);
             ckb_ISA.TabIndex = 12;
-            ckb_ISA.Text = "ckb_ISA";
+            ckb_ISA.Text = "ISA";
             ckb_ISA.UseVisualStyleBackColor = true;
             // 
             // llb_URL
@@ -827,9 +827,9 @@ namespace HLWebScraper.Net
             // 
             btn_ReloadCategories.AutoSize = true;
             btn_ReloadCategories.Dock = DockStyle.Right;
-            btn_ReloadCategories.Location = new Point(471, 3);
+            btn_ReloadCategories.Location = new Point(470, 3);
             btn_ReloadCategories.Name = "btn_ReloadCategories";
-            btn_ReloadCategories.Size = new Size(207, 24);
+            btn_ReloadCategories.Size = new Size(208, 24);
             btn_ReloadCategories.TabIndex = 13;
             btn_ReloadCategories.Text = "Reload ETF Categorisation from CSV";
             btn_ReloadCategories.UseVisualStyleBackColor = false;
@@ -854,7 +854,7 @@ namespace HLWebScraper.Net
             MainMenuStrip = mns_Main;
             MaximizeBox = false;
             Name = "FrmMainApp";
-            Text = "HL Web Scraper/Parser";
+            Text = "HL Web Screener";
             FormClosing += FrmMainApp_FormClosing;
             Load += FrmMainApp_Load;
             mns_Main.ResumeLayout(false);
