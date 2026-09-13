@@ -20,8 +20,8 @@ public partial class FrmMainApp : Form
     private static char[] selectedAlphabet;
 
     private static readonly HashSet<string> UrlListOfStocksAndShares = [];
-    private static readonly CompressedMemoryCache urlAndHtmlContentHashtable = new();
-    private static readonly CompressedMemoryCache urlAndCompanyInfoHashtable = new();
+    private static readonly CompressedMemoryCache<Dictionary<string, string>> urlAndHtmlContentHashtable = new();
+    private static readonly CompressedMemoryCache<Dictionary<string, string>> urlAndCompanyInfoHashtable = new();
 
     private static int _urlCounter;
     private static readonly object urlCounterLock = new();
@@ -362,17 +362,13 @@ public partial class FrmMainApp : Form
         if (!url.Contains(value: "company-info"))
         {
             urlAndHtmlContentHashtable.AddOrUpdate(key: url,
-                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
-                    text: ReturnPageText(
-                        HTMLTextInHtmlContentHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+                value: HlPageParser.ReturnPageText(htmlContent: htmlContent));
         }
         // Company
         else
         {
             urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
-                value: HelperStringUtils.TrimAndReplaceNewLinesAndTabs(
-                    text: ReturnCompanyPageText(
-                        HTMLTextInCompanyInfoHashtable: HelperStringUtils.TrimInternalSpaces(s: htmlContent))));
+                value: HlPageParser.ReturnCompanyPageText(htmlContent: htmlContent));
         }
 
         IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
@@ -390,32 +386,22 @@ public partial class FrmMainApp : Form
         {
             Application.DoEvents();
 
-            string HTMLTextInHtmlContentHashtable = urlAndHtmlContentHashtable.Get(key: url) ?? string.Empty;
-            string HTMLTextInCompanyInfoHashtable =
-                urlAndCompanyInfoHashtable.Get(key: url + "/company-information") ?? string.Empty;
-            if (HTMLTextInHtmlContentHashtable.Length > 0 &&
-                HTMLTextInCompanyInfoHashtable.Length > 0)
+            Dictionary<string, string>? dataInContentHashtable = urlAndHtmlContentHashtable.Get(key: url);
+            Dictionary<string, string>? dataInCompanyInfoHashtable = urlAndCompanyInfoHashtable.Get(key: url + "/company-information");
+            if (dataInContentHashtable != null &&
+                dataInCompanyInfoHashtable != null)
             {
                 string logMessageVal = $"Parsing {url}";
                 FrmMainApp frmMainAppInstance = (FrmMainApp)Application.OpenForms[name: "FrmMainApp"];
-                //AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal,
-                //    logMessageType: LogMessageTypes.Start);
 
-                string pageText = HTMLTextInHtmlContentHashtable;
-                string companyPageText = HTMLTextInCompanyInfoHashtable;
-
-                if (pageText.Contains(
-                        value:
-                        "By law certain stocks must have a Key Investor Information Document / Key Information Document available before investors can purchase them."))
+                if (dataInContentHashtable.Count == 0)
                 {
-                    AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal + " - invalid item.",
-                        logMessageType: LogMessageTypes.Error);
-                    return null;
+                    return returnInvalidItem(logMessageVal, frmMainAppInstance);
                 }
 
-                string name = TagsToModelValueTransformations.T2M_Name(pageText: pageText);
-                string sedolID = TagsToModelValueTransformations.T2M_SEDOL_ID(pageText: pageText);
-                string ticker = TagsToModelValueTransformations.T2M_Ticker(name: name);
+                string name = dataInContentHashtable["Name"];
+                string sedolID = dataInContentHashtable["SEDOL"];
+                string ticker = dataInContentHashtable["EPIC"];
 
                 // exit if fails here
                 if (string.IsNullOrWhiteSpace(value: sedolID) ||
@@ -423,37 +409,39 @@ public partial class FrmMainApp : Form
                     string.IsNullOrWhiteSpace(value: name) ||
                     name.Contains(value: "404"))
                 {
-                    AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal + " - invalid item.",
-                        logMessageType: LogMessageTypes.Error);
-                    return null;
+                    return returnInvalidItem(logMessageVal, frmMainAppInstance);
                 }
 
-                string currISO3 = TagsToModelValueTransformations.T2M_Currency(pageText: pageText);
+                string currISO3 = dataInContentHashtable["Currency"] ?? string.Empty;
                 string currSign = TagsToModelValueTransformations.T2M_CurrencySign(currISO3: currISO3);
                 double gbpEqivalent = TagsToModelValueTransformations.T2M_GBPEquivalent(currISO3: currISO3);
-                double openVal = TagsToModelValueTransformations.T2M_Open_price(pageText: pageText);
-                double yearLow = TagsToModelValueTransformations.T2M_Year_low(pageText: pageText, openVal: openVal);
-                double yearHigh = TagsToModelValueTransformations.T2M_Year_high(pageText: pageText, openVal: openVal);
-                double volume = TagsToModelValueTransformations.T2M_Volume(pageText: pageText);
-                double marketCap =
-                    TagsToModelValueTransformations.T2M_Market_capitalisation(pageText: pageText, currISO3: currISO3,
-                        currSign: currSign);
+
+                double openVal = TagsToModelValueTransformations.T2M_Open_price(openStr: dataInContentHashtable["OpenPrice"] ?? string.Empty);
+                double yearLow = TagsToModelValueTransformations.T2M_Year_low(yearLowStr: dataInContentHashtable["YearLow"] ?? string.Empty, openVal: openVal);
+                double yearHigh = TagsToModelValueTransformations.T2M_Year_high(yearHighStr: dataInContentHashtable["YearLow"] ?? string.Empty, openVal: openVal);
+                double volume = TagsToModelValueTransformations.T2M_Volume(volumeStr: dataInContentHashtable["VolumeTraded"] ?? string.Empty);
+                double marketCap = TagsToModelValueTransformations.T2M_Market_capitalisation(marketCapStr: dataInContentHashtable["MarketCap"] ?? string.Empty, currISO3: currISO3, currSign: currSign);
+
+                string dividendYield = TagsToModelValueTransformations.T2M_Dividend_yield(divYieldStr: dataInContentHashtable["DividendYield"] ?? string.Empty);
+
+                double peRatio = TagsToModelValueTransformations.T2M_PE_ratio(peRatioStr: dataInContentHashtable["PERatio"] ?? string.Empty, currSign: currSign);
 
                 // this is a bit tricky. bonds & trusts don't _really_ have a corporate page so i have to trick around this stuff
-                string sector = pageText.Contains(value: "More about bond pricing here")
-                    ? "Bond"
-                    : pageText.Contains(value: "Trust&nbsp;<br/>info")
-                    ? "Trust"
-                    : TagsToModelValueTransformations.T2M_Sector(companyPageText: companyPageText,
+                string type = dataInContentHashtable["Type"] ?? string.Empty;
+                string sector = type.Contains("trust") ? "Trust" : type.Contains("bond") ? "Bond" : TagsToModelValueTransformations.T2M_Sector(dataInContentHashtableSector: dataInContentHashtable["Sector"] ?? string.Empty,
                         securityNameLowerCase: name, ticker: ticker, marketCapOverZero: marketCap > 0);
+
                 string etfType = !sector.Contains(value: "ETF")
                     ? Not_ETF_ETFType
                     : TagsToModelValueTransformations.T2M_ETF_Type(name: name);
+
+                _ = dataInCompanyInfoHashtable.TryGetValue("TopHoldings", out string top10_exposures);
+
                 SEDOL newSedol = new()
                 {
                     URL = url,
                     Name = name,
-                    Is_ISA_Compatible = pageText.Contains(value: "icon-link tick-icon small-margin-right"),
+                    Is_ISA_Compatible = bool.Parse(dataInContentHashtable["IsIsaTradeable"]),
                     SEDOL_ID = sedolID,
                     Currency = currISO3,
                     Ticker = ticker,
@@ -461,8 +449,8 @@ public partial class FrmMainApp : Form
                     Year_low = yearLow,
                     Year_high = yearHigh,
                     Volume = volume,
-                    Dividend_yield = TagsToModelValueTransformations.T2M_Dividend_yield(pageText: pageText),
-                    PE_ratio = TagsToModelValueTransformations.T2M_PE_ratio(pageText: pageText, currSign: currSign),
+                    Dividend_yield = dividendYield,
+                    PE_ratio = peRatio,
                     Market_capitalisation = marketCap,
                     GBP_Open = openVal * gbpEqivalent,
                     GBP_Year_low = yearLow * gbpEqivalent,
@@ -470,10 +458,7 @@ public partial class FrmMainApp : Form
                     GBP_Market_capitalisation = marketCap * gbpEqivalent,
                     Sector = sector,
                     ETF_Type = etfType,
-                    Top10_Exposures = TagsToModelValueTransformations.T2M_Top10_Exposures(pageText: pageText),
-                    Exchange = TagsToModelValueTransformations.T2M_Exchange(companyPageText: companyPageText),
-                    Country = TagsToModelValueTransformations.T2M_Country(companyPageText: companyPageText),
-                    Indices = TagsToModelValueTransformations.T2M_Indices(companyPageText: companyPageText)
+                    Top10_Exposures = top10_exposures ?? string.Empty,
                 };
 
                 AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log,
@@ -489,175 +474,13 @@ public partial class FrmMainApp : Form
         }
 
         return null;
-    }
 
-    /// <summary>
-    ///     Gets the relevant parts of the main page text. Each html file is some 200-400K and most of it is just
-    ///     useless/script/whitespace/other junk.
-    /// </summary>
-    /// <param name="HTMLTextInHtmlContentHashtable"></param>
-    /// <returns></returns>
-    private static string ReturnPageText(string HTMLTextInHtmlContentHashtable)
-    {
-        string[] textsToLookFor =
-        [
-            "<div class",
-            "<span data-tooltip",
-            "<br class=",
-            "<span class",
-            "</span"
-        ];
-
-        string pageText = "<h1>" + HelperStringUtils.FindTextBetween(pageText: HTMLTextInHtmlContentHashtable,
-            textStart: "<h1>",
-            textEnd: "<!-- end factsheet -->");
-
-        for (int i = 0; i < 5; i++)
+        static SEDOL? returnInvalidItem(string logMessageVal, FrmMainApp frmMainAppInstance)
         {
-            string textToLookFor = textsToLookFor[i];
-            int count = (pageText.Length - pageText.Replace(oldValue: textToLookFor, newValue: "").Length) /
-                        textToLookFor.Length;
-
-            for (int i2 = 0; i2 < count; i2++)
-            {
-                int charToFindStart =
-                    pageText.IndexOf(value: textToLookFor, comparisonType: StringComparison.Ordinal);
-                int charToFindEnd = pageText.IndexOf(value: ">", startIndex: charToFindStart,
-                    comparisonType: StringComparison.Ordinal);
-                if (charToFindStart != -1 &&
-                    charToFindEnd != -1)
-                {
-                    pageText = pageText.Remove(startIndex: charToFindStart,
-                        count: charToFindEnd - charToFindStart + 1);
-                }
-            }
+            AppendLogWindowText(tbx: frmMainAppInstance.tbx_Log, appendText: logMessageVal + " - invalid item.",
+                                    logMessageType: LogMessageTypes.Error);
+            return null;
         }
-
-        pageText = pageText.Replace(oldValue: "Market capitalisation</div>Market cap.</div>",
-            newValue: "Market capitalisation:");
-
-        return pageText;
-    }
-
-    /// <summary>
-    ///     Gets the relevant part of the corporate info subpages.
-    ///     This particular one has been ported from VBA more or less as-was so it's a little redundant in its ways but
-    ///     nonetheless efficient at cleaning up stuff.
-    /// </summary>
-    /// <param name="HTMLTextInCompanyInfoHashtable"></param>
-    /// <returns></returns>
-    private static string ReturnCompanyPageText(string HTMLTextInCompanyInfoHashtable)
-    {
-        string trimmedText = HTMLTextInCompanyInfoHashtable.Trim();
-        bool crapIndicator = false;
-        string pageText = "<!DOCTYPE html><head></head><body>";
-        int charToFindEnd = -1;
-        int charToFindStart =
-            trimmedText.IndexOf(value: "<strong>EPIC:</strong>", comparisonType: StringComparison.Ordinal);
-        if (charToFindStart == -1)
-        {
-            charToFindStart = trimmedText.IndexOf(value: "<strong>Short code:</strong>",
-                comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1)
-            {
-                crapIndicator = true;
-            }
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindEnd = trimmedText.IndexOf(value: "</dd>", startIndex: charToFindStart,
-                comparisonType: StringComparison.Ordinal);
-            pageText += trimmedText.Substring(startIndex: charToFindStart,
-                length: charToFindEnd - charToFindStart + "</dd>".Length);
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindStart =
-                trimmedText.IndexOf(value: "<strong>Sector:</strong>", startIndex: charToFindEnd,
-                    comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1)
-            {
-                crapIndicator = true;
-            }
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindEnd = trimmedText.IndexOf(value: "</dd>", startIndex: charToFindStart,
-                comparisonType: StringComparison.Ordinal);
-            pageText += trimmedText.Substring(startIndex: charToFindStart,
-                length: charToFindEnd - charToFindStart + "</dd>".Length);
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindStart =
-                trimmedText.IndexOf(value: "<strong>Exchange:</strong>", startIndex: charToFindEnd,
-                    comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1)
-            {
-                crapIndicator = true;
-            }
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindEnd = trimmedText.IndexOf(value: "</dd>", startIndex: charToFindStart,
-                comparisonType: StringComparison.Ordinal);
-            pageText += trimmedText.Substring(startIndex: charToFindStart,
-                length: charToFindEnd - charToFindStart + "</dd>".Length);
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindStart =
-                trimmedText.IndexOf(value: "<strong>Country:</strong>", startIndex: charToFindEnd,
-                    comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1)
-            {
-                crapIndicator = true;
-            }
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindEnd = trimmedText.IndexOf(value: "</dd>", startIndex: charToFindStart,
-                comparisonType: StringComparison.Ordinal);
-            pageText += trimmedText.Substring(startIndex: charToFindStart,
-                length: charToFindEnd - charToFindStart + "</dd>".Length);
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindStart =
-                trimmedText.IndexOf(value: "<strong>Indices:</strong>", startIndex: charToFindEnd,
-                    comparisonType: StringComparison.Ordinal);
-            if (charToFindStart == -1)
-            {
-                crapIndicator = true;
-            }
-        }
-
-        if (!crapIndicator)
-        {
-            charToFindEnd = trimmedText.IndexOf(value: "</dd>", startIndex: charToFindStart,
-                comparisonType: StringComparison.Ordinal);
-            pageText += trimmedText.Substring(startIndex: charToFindStart,
-                length: charToFindEnd - charToFindStart + "</dd>".Length);
-        }
-
-        if (crapIndicator)
-        {
-            pageText += "Crap Data";
-        }
-
-        pageText = pageText.Replace(oldValue: "<strong>", newValue: "")
-                           .Replace(oldValue: "</strong>", newValue: "");
-        pageText += "</body>";
-
-        return pageText;
     }
 
     #endregion
@@ -892,9 +715,7 @@ public partial class FrmMainApp : Form
                 _ = llb_URL.Links.Add(start: 0, length: 3, linkData: sedol.URL);
                 tbx_Sector.Text = sedol.Sector;
                 tbx_ETFType.Text = sedol.ETF_Type;
-                tbx_Country.Text = sedol.Country;
                 tbx_Currency.Text = sedol.Currency;
-                tbx_Indicies.Text = sedol.Indices;
                 tbx_DivYield.Text = sedol.Dividend_yield;
                 tbx_OpenPrice_OC.Text = sedol.Open_price.ToString(format: "N4", provider: NumberFormatInfo.CurrentInfo);
                 tbx_OpenPrice_GBP.Text =
@@ -915,6 +736,11 @@ public partial class FrmMainApp : Form
         }
     }
 
+    /// <summary>
+    /// Opens the browser to the link clicked
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void llb_URL_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
     {
         if (e.Link != null)
@@ -1191,13 +1017,38 @@ public partial class FrmMainApp : Form
     }
 
     #endregion
-}
 
-internal enum LogMessageTypes
-{
-    Start,
-    Done,
-    Error,
-    Info,
-    None
+
+    /// <summary>
+    /// Select all items in the listbox
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void btn_All_Click(object sender, EventArgs e)
+    {
+        // Select All
+        for (int i = 0; i < lbx_Alphabet.Items.Count; i++)
+        {
+            lbx_Alphabet.SetSelected(i, true);
+        }
+    }
+
+    /// <summary>
+    /// Select no items in the listbox
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    private void btn_None_Click(object sender, EventArgs e)
+    {
+        lbx_Alphabet.ClearSelected();
+    }
+
+    internal enum LogMessageTypes
+    {
+        Start,
+        Done,
+        Error,
+        Info,
+        None
+    }
 }

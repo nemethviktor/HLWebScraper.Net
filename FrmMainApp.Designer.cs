@@ -43,6 +43,8 @@ namespace HLWebScraper.Net
             tbl_ScrapeMainGrid = new TableLayoutPanel();
             lbl_SelectionPicker = new Label();
             lbx_Alphabet = new ListBox();
+            btn_All = new Button();
+            btn_None = new Button();
             btn_StartScrape = new Button();
             btn_Stop = new Button();
             gbx_Log = new GroupBox();
@@ -77,14 +79,8 @@ namespace HLWebScraper.Net
             tbx_Search = new TextBox();
             cbx_Securities = new ComboBox();
             gbx_Overview = new GroupBox();
-            tbx_Country = new TextBox();
-            tbx_Indicies = new TextBox();
-            lbl_Indicies = new Label();
-            textBox1 = new TextBox();
-            lbl_Country = new Label();
             tbx_Currency = new TextBox();
             lbl_Currency = new Label();
-            label1 = new Label();
             pbx_ETFType = new PictureBox();
             tbx_ETFType = new TextBox();
             lbl_ETFType = new Label();
@@ -203,15 +199,19 @@ namespace HLWebScraper.Net
             // 
             // tbl_ScrapeMainGrid
             // 
-            tbl_ScrapeMainGrid.ColumnCount = 4;
+            tbl_ScrapeMainGrid.ColumnCount = 6;
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
             tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
-            tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
+            tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
+            tbl_ScrapeMainGrid.ColumnStyles.Add(new ColumnStyle());
             tbl_ScrapeMainGrid.Controls.Add(lbl_SelectionPicker, 0, 0);
             tbl_ScrapeMainGrid.Controls.Add(lbx_Alphabet, 1, 0);
-            tbl_ScrapeMainGrid.Controls.Add(btn_StartScrape, 2, 0);
-            tbl_ScrapeMainGrid.Controls.Add(btn_Stop, 3, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_All, 2, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_None, 3, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_StartScrape, 4, 0);
+            tbl_ScrapeMainGrid.Controls.Add(btn_Stop, 5, 0);
             tbl_ScrapeMainGrid.Controls.Add(gbx_Log, 0, 1);
             tbl_ScrapeMainGrid.Dock = DockStyle.Fill;
             tbl_ScrapeMainGrid.Location = new Point(3, 3);
@@ -219,7 +219,6 @@ namespace HLWebScraper.Net
             tbl_ScrapeMainGrid.RowCount = 2;
             tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
             tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle());
-            tbl_ScrapeMainGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tbl_ScrapeMainGrid.Size = new Size(776, 356);
             tbl_ScrapeMainGrid.TabIndex = 7;
             // 
@@ -250,13 +249,35 @@ namespace HLWebScraper.Net
             lbx_Alphabet.Sorted = true;
             lbx_Alphabet.TabIndex = 3;
             // 
+            // btn_All
+            // 
+            btn_All.Dock = DockStyle.Fill;
+            btn_All.Location = new Point(419, 3);
+            btn_All.Name = "btn_All";
+            btn_All.Size = new Size(59, 28);
+            btn_All.TabIndex = 13;
+            btn_All.Text = "All";
+            btn_All.UseVisualStyleBackColor = true;
+            btn_All.Click += btn_All_Click;
+            // 
+            // btn_None
+            // 
+            btn_None.Dock = DockStyle.Fill;
+            btn_None.Location = new Point(484, 3);
+            btn_None.Name = "btn_None";
+            btn_None.Size = new Size(54, 28);
+            btn_None.TabIndex = 14;
+            btn_None.Text = "None";
+            btn_None.UseVisualStyleBackColor = true;
+            btn_None.Click += btn_None_Click;
+            // 
             // btn_StartScrape
             // 
             btn_StartScrape.AutoSize = true;
             btn_StartScrape.Dock = DockStyle.Right;
-            btn_StartScrape.Location = new Point(419, 3);
+            btn_StartScrape.Location = new Point(544, 3);
             btn_StartScrape.Name = "btn_StartScrape";
-            btn_StartScrape.Size = new Size(94, 28);
+            btn_StartScrape.Size = new Size(79, 28);
             btn_StartScrape.TabIndex = 7;
             btn_StartScrape.Text = "Start Scrape";
             btn_StartScrape.UseVisualStyleBackColor = false;
@@ -277,7 +298,7 @@ namespace HLWebScraper.Net
             // gbx_Log
             // 
             gbx_Log.AutoSize = true;
-            tbl_ScrapeMainGrid.SetColumnSpan(gbx_Log, 4);
+            tbl_ScrapeMainGrid.SetColumnSpan(gbx_Log, 6);
             gbx_Log.Controls.Add(tbx_Log);
             gbx_Log.Dock = DockStyle.Fill;
             gbx_Log.Location = new Point(3, 37);
@@ -585,14 +606,8 @@ namespace HLWebScraper.Net
             // 
             // gbx_Overview
             // 
-            gbx_Overview.Controls.Add(tbx_Country);
-            gbx_Overview.Controls.Add(tbx_Indicies);
-            gbx_Overview.Controls.Add(lbl_Indicies);
-            gbx_Overview.Controls.Add(textBox1);
-            gbx_Overview.Controls.Add(lbl_Country);
             gbx_Overview.Controls.Add(tbx_Currency);
             gbx_Overview.Controls.Add(lbl_Currency);
-            gbx_Overview.Controls.Add(label1);
             gbx_Overview.Controls.Add(pbx_ETFType);
             gbx_Overview.Controls.Add(tbx_ETFType);
             gbx_Overview.Controls.Add(lbl_ETFType);
@@ -614,51 +629,9 @@ namespace HLWebScraper.Net
             gbx_Overview.TabStop = false;
             gbx_Overview.Text = "Overview";
             // 
-            // tbx_Country
-            // 
-            tbx_Country.Location = new Point(248, 188);
-            tbx_Country.Name = "tbx_Country";
-            tbx_Country.ReadOnly = true;
-            tbx_Country.Size = new Size(115, 23);
-            tbx_Country.TabIndex = 29;
-            // 
-            // tbx_Indicies
-            // 
-            tbx_Indicies.Location = new Point(69, 188);
-            tbx_Indicies.Name = "tbx_Indicies";
-            tbx_Indicies.ReadOnly = true;
-            tbx_Indicies.Size = new Size(115, 23);
-            tbx_Indicies.TabIndex = 28;
-            // 
-            // lbl_Indicies
-            // 
-            lbl_Indicies.AutoSize = true;
-            lbl_Indicies.Location = new Point(13, 193);
-            lbl_Indicies.Name = "lbl_Indicies";
-            lbl_Indicies.Size = new Size(47, 15);
-            lbl_Indicies.TabIndex = 13;
-            lbl_Indicies.Text = "Indicies";
-            // 
-            // textBox1
-            // 
-            textBox1.Location = new Point(248, 87);
-            textBox1.Name = "textBox1";
-            textBox1.ReadOnly = true;
-            textBox1.Size = new Size(115, 23);
-            textBox1.TabIndex = 27;
-            // 
-            // lbl_Country
-            // 
-            lbl_Country.AutoSize = true;
-            lbl_Country.Location = new Point(248, 164);
-            lbl_Country.Name = "lbl_Country";
-            lbl_Country.Size = new Size(50, 15);
-            lbl_Country.TabIndex = 12;
-            lbl_Country.Text = "Country";
-            // 
             // tbx_Currency
             // 
-            tbx_Currency.Location = new Point(309, 123);
+            tbx_Currency.Location = new Point(69, 188);
             tbx_Currency.Name = "tbx_Currency";
             tbx_Currency.ReadOnly = true;
             tbx_Currency.Size = new Size(54, 23);
@@ -667,20 +640,11 @@ namespace HLWebScraper.Net
             // lbl_Currency
             // 
             lbl_Currency.AutoSize = true;
-            lbl_Currency.Location = new Point(248, 129);
+            lbl_Currency.Location = new Point(8, 194);
             lbl_Currency.Name = "lbl_Currency";
             lbl_Currency.Size = new Size(55, 15);
             lbl_Currency.TabIndex = 25;
             lbl_Currency.Text = "Currency";
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(189, 94);
-            label1.Name = "label1";
-            label1.Size = new Size(57, 15);
-            label1.TabIndex = 11;
-            label1.Text = "Exchange";
             // 
             // pbx_ETFType
             // 
@@ -918,14 +882,8 @@ namespace HLWebScraper.Net
         private PictureBox pbx_ETFType;
         private ToolTip ttp_ETFType;
         private GroupBox gbx_Indicators;
-        private Label lbl_Indicies;
-        private Label lbl_Country;
-        private Label label1;
         private TextBox tbx_Currency;
         private Label lbl_Currency;
-        private TextBox textBox1;
-        private TextBox tbx_Country;
-        private TextBox tbx_Indicies;
         private Label lbl_OpenPrice;
         private TextBox tbx_YearHigh_GBP;
         private TextBox tbx_YearHigh_OC;
@@ -955,5 +913,7 @@ namespace HLWebScraper.Net
         private CheckBox ckb_ETFOnlySearch;
         private CheckBox ckb_ISAOnlySearch;
         private NotifyIcon nic_ProcessFinished;
+        private Button btn_All;
+        private Button btn_None;
     }
 }

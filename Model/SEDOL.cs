@@ -10,9 +10,6 @@ internal class SEDOL
     public string Sector { get; set; }
     public string ETF_Type { get; set; }
     public string Top10_Exposures { get; set; }
-    public string Exchange { get; set; }
-    public string Country { get; set; }
-    public string Indices { get; set; }
     public string Currency { get; set; }
     public double Open_price { get; set; }
     public double Year_low { get; set; }

@@ -58,7 +58,7 @@ Vietnam,Regional
 Mexico,Regional
 Russia,Regional
 Germany,Regional
-Health,Healthcare
+Health,Healthcare & Pharma
 Information,Cloud & AI & IT
 USA,Regional
 United King,Regional
@@ -163,7 +163,7 @@ long GBP,Currency
 short GBP,Currency
  nok ,Currency
 chf,Currency
-Pharma,Pharma
+Pharma,Healthcare & Pharma
 Ecomm,Ecomm
 Equity,Equity
 Islamic,Regional
@@ -207,8 +207,8 @@ S&amp;P,Index
 Bund,Bonds
 Nasdaq,Index
 Inflation,Inflation
-defense,Military
-defence,Military
+defense,Military & Defense
+defence,Military & Defense
 Funds,Funds
 AI,Cloud & AI & IT
 Quantum,Cloud & AI & IT
@@ -216,3 +216,22 @@ Global,World
 World,World
 Oil ETC,ETC - Oil & Gas
 Web 3,Cloud & AI & IT
+Medical,Healthcare & Pharma
+Defiance,Military & Defense
+BRIC,Regional
+Agri,Industry
+Israel,Regional
+Artificial Int,Cloud & AI & IT
+Art Int,Cloud & AI & IT
+Oil Service,Industry
+Space,Space
+Rhodium,ETC - Metals
+Big Data,Cloud & AI & IT
+High Income,High Yield
+Overnight,Overnight/Smart
+Genomic,Healthcare & Pharma
+Innovation,Innovation
+Ibex,Index
+Steel,Mining & Metals
+QQQ,Index
+wisdomtree tin,Mining & Metals

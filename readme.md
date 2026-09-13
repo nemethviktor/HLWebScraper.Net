@@ -17,9 +17,6 @@ Things this collects (each subject to availability):
 - Sector (kinda-custom)
 - ETF_Type (user-defined, see below)
 - Top 10 Exposures (where available, in reality just for some ETFs)
-- Exchange 
-- Country 
-- Indices 
 - Currency 
 - Open price (orig Currency and GBP)
 - Year low (orig Currency and GBP)
@@ -61,17 +58,17 @@ There's no installation file per se. Unzip and run the exe.
 
 ### ETF Classifications
 
-- There's a CSV file called ETF_Types_example.csv in the Resources folder. It works on a "contains" [_not_ case sensitive!] basis and each line is taken into consideration in order or precedence. When a "contains" match is found the loop exits. 
+- There's a CSV file called `ETF_Types_example.csv` in the Resources folder. It works on a "contains" [_not_ case sensitive!] basis and each line is taken into consideration in order or precedence. When a "contains" match is found the loop exits. 
   - To make this a bit obvious in terms of what this means assume we're looking at _XBT Provider  Bitcoin Tracker Euro  (BIT-XBTE)_
-    - If in your ETF_Types.csv "euro" precedes "coin" then this will be classified as _Regional_
+    - If in your `ETF_Types.csv` "euro" precedes "coin" then this will be classified as _Regional_
     - If however "euro" is after "coin" you'll get _Crypto_
   - If you want to modify that file feel free to but the way the code works is that:
-    - it checks if there's an ETF_Types.csv
-    - if so then it will take that and ignore ETF_Types_example.csv
-    - otherwise it will take ETF_Types_example.csv
-    - remember that if this repo ever gets updated then ETF_Types_example.csv may or may not be overwritten therefore I strongly suggest you copy to and modify ETF_Types.csv to your own liking
-    - you can use the relevant button in the app to reload the ETF_Types.csv and then output the updated results into a new file (you _do_ need to press the Save Data button for that to happen.)
-    - it is expected that ETF_Types_example.csv//ETF_Types.csv have the column structure as in the example file, otherwise the contents will be ignored and/or the code might break.
+    - it checks if there's an `ETF_Types.csv`
+    - if so then it will take that and ignore `ETF_Types_example.csv`
+    - otherwise it will take `ETF_Types_example.csv`
+    - remember that if this repo ever gets updated then `ETF_Types_example.csv` may or may not be overwritten therefore I strongly suggest you copy to and modify `ETF_Types.csv` to your own liking
+    - you can use the relevant button in the app to reload the `ETF_Types.csv` and then output the updated results into a new file (you _do_ need to press the Save Data button for that to happen.)
+    - it is expected that `ETF_Types_example.csv`/`ETF_Types.csv` have the column structure as in the example file, otherwise the contents will be ignored and/or the code might break.
 
 ### Things to Note
 

@@ -1,77 +1,22 @@
-﻿using System.Text.RegularExpressions;
-using HLWebScraper.Net.Helpers;
+﻿using HLWebScraper.Net.Helpers;
+using System.Text.RegularExpressions;
 
 namespace HLWebScraper.Net.Model;
 
 internal static class TagsToModelValueTransformations
 {
-    /// <summary>
-    ///     Gets the name of the security from the header. Not using <title></title> because that has some extra crap in it.
-    ///     Vaguely similar logic with the <span></span> vs <h1></h1> f..kery. In some cases relying on span returns odd
-    ///     values.
-    /// </summary>
-    /// <param name="pageText">The HTML string</param>
-    /// <returns></returns>
-    public static string T2M_Name(string pageText)
-    {
-        string nameViaH1Span =
-            HelperStringUtils.FindTextBetween(pageText: pageText, textStart: "<h1>", textEnd: "<span>");
-        string nameViaH1H1 = HelperStringUtils.FindTextBetween(pageText: pageText, textStart: "<h1>", textEnd: "</h1>");
-        return HelperStringUtils.ClearUTFChars(input: nameViaH1Span.Length < nameViaH1H1.Length
-            ? nameViaH1Span
-            : nameViaH1H1);
-    }
-
-
-    /// <summary>
-    ///     Gets the ticker if one's available
-    /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    public static string T2M_Ticker(string name)
-    {
-        // see if there's a "(xxx)" style text in there somewhere.
-        try
-        {
-            return name.Substring(startIndex: name.LastIndexOf(value: "(", comparisonType: StringComparison.Ordinal),
-                            length: name.LastIndexOf(value: ")", comparisonType: StringComparison.Ordinal) -
-                            name.LastIndexOf(value: "(", comparisonType: StringComparison.Ordinal) + 1)
-                       .Replace(oldValue: "(", newValue: "").Replace(oldValue: ")", newValue: "");
-        }
-        catch
-        {
-            return "";
-        }
-    }
-
-    /// <summary>
-    ///     Gets the SEDOL ID. If this fails the newSedol won't be added to the SEDOLs Hashset
-    /// </summary>
-    /// <param name="pageText"></param>
-    /// <returns></returns>
-    public static string T2M_SEDOL_ID(string pageText)
-    {
-        string sedolViaID_SEDOL =
-            HelperStringUtils.FindTextBetween(pageText: pageText, textStart: "ID_SEDOL=", textEnd: "&");
-        string sedolViaID_NOTATION =
-            HelperStringUtils.FindTextBetween(pageText: pageText, textStart: "ID_NOTATION=", textEnd: "&");
-
-        return HelperStringUtils.ClearUTFChars(input: sedolViaID_SEDOL != string.Empty
-            ? sedolViaID_SEDOL
-            : sedolViaID_NOTATION);
-    }
 
     /// <summary>
     ///     Somewhat arbitrarily attempts to figure if something is stuff like Gilts or an ETF or not. If likely neither then
     ///     we try to pull the Sector info from teh company-info page.
     ///     Items that have a non-zero market cap are definitely not ETFs
     /// </summary>
-    /// <param name="companyPageText"></param>
+    /// <param name="dataInContentHashtableSector"></param>
     /// <param name="securityNameLowerCase"></param>
     /// <param name="ticker"></param>
     /// <param name="marketCapOverZero"></param>
     /// <returns></returns>
-    public static string T2M_Sector(string companyPageText, string securityNameLowerCase, string ticker,
+    public static string T2M_Sector(string dataInContentHashtableSector, string securityNameLowerCase, string ticker,
         bool marketCapOverZero)
     {
         securityNameLowerCase = securityNameLowerCase.ToLower();
@@ -80,16 +25,16 @@ internal static class TagsToModelValueTransformations
         // Items that have a non - zero market cap are definitely not ETFs
         if (!marketCapOverZero)
         {
-            List<string> invalidatingContainerList = new() { " ord ", " ordinary ", " npv", "stk", ".0", ".1" };
+            List<string> invalidatingContainerList = [" ord ", " ordinary ", " npv", "stk", ".0", ".1"];
             if (!invalidatingContainerList.Any(predicate: container =>
                     securityNameLowerCase.Contains(value: container)))
             {
-                List<string> etf1xContainerList = new()
-                {
+                List<string> etf1xContainerList =
+                [
                     "daily ", " daily", "invesco", "etf ", " etf", "fund ", " fund", "ucits", "msci", "accum", "etc",
                     "ishares", "growth", "lyxor", "commodity", "index", "wisdomtree", "wisdom tree", "gold bu",
                     "xtrackers", "multi unit", "xbt provider"
-                };
+                ];
                 if (securityNameLowerCase.Contains(value: "gilt"))
                     sector = "Gilts etc";
 
@@ -135,14 +80,14 @@ internal static class TagsToModelValueTransformations
                      sector.StartsWith(value: "ETF") && sector.EndsWith(value: "x") &&
                      !(sector.StartsWith(value: "ETF -") && sector.EndsWith(value: "x"))))
                 {
-                    List<string> ignoreContainsList = new()
-                    {
+                    List<string> ignoreContainsList =
+                    [
                         "short term",
                         "short-term",
                         "matur",
                         "ultra",
                         "duration"
-                    };
+                    ];
                     if (!ignoreContainsList.Any(predicate: container => sector.Contains(value: container)))
                         sector = sector.Replace(oldValue: "ETF ", newValue: "ETF -");
                 }
@@ -152,13 +97,10 @@ internal static class TagsToModelValueTransformations
         // try and pull from website. this might be a logic first step but i'd like to qualify etfs separately.
         string likelySector = string.Empty;
         if (sector == "Unspecified")
-            likelySector = HelperStringUtils.FindTextBetween(
-                pageText: companyPageText,
-                textStart: "Sector:<dd>",
-                textEnd: "</dd>");
+            likelySector = dataInContentHashtableSector;
 
         return HelperStringUtils.ClearUTFChars(input: string.IsNullOrWhiteSpace(value: likelySector)
-            ? sector.Replace(oldValue: "&", newValue: "and")
+            ? sector.Replace(oldValue: "&", newValue: "and").Replace(oldValue: "--", newValue: "-")
             : likelySector);
     }
 
@@ -170,118 +112,10 @@ internal static class TagsToModelValueTransformations
     public static string T2M_ETF_Type(string name)
     {
         foreach (ETFType etfType in FrmMainApp.ETF_Types)
-            if (name.ToLower().Contains(value: etfType.Keyword.ToLower()))
+            if (name.Contains(value: etfType.Keyword, comparisonType: StringComparison.CurrentCultureIgnoreCase))
                 return etfType.ETF_Type;
 
-
-        return "Not classified";
-    }
-
-
-    /// <summary>
-    ///     Reads the Exchange list (where available)
-    /// </summary>
-    /// <param name="companyPageText"></param>
-    /// <returns></returns>
-    public static string T2M_Exchange(string companyPageText)
-    {
-        string likelyExchange = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
-            pageText: companyPageText,
-            textStart: "Exchange:<dd>",
-            textEnd: "</dd>"));
-
-        return likelyExchange == "-" || likelyExchange == "n/a" ? string.Empty : likelyExchange;
-    }
-
-    /// <summary>
-    ///     Reads the Country (where available)
-    /// </summary>
-    /// <param name="companyPageText"></param>
-    /// <returns></returns>
-    public static string T2M_Country(string companyPageText)
-    {
-        string likelyCountry = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
-            pageText: companyPageText,
-            textStart: "Country:<dd>",
-            textEnd: "</dd>"));
-
-        return likelyCountry == "-" || likelyCountry == "n/a" ? string.Empty : likelyCountry;
-    }
-
-    /// <summary>
-    ///     Reads the Indices [really, index] (where available)
-    /// </summary>
-    /// <param name="companyPageText"></param>
-    /// <returns></returns>
-    public static string T2M_Indices(string companyPageText)
-    {
-        string likelyIndex = HelperStringUtils.ClearUTFChars(input: HelperStringUtils.FindTextBetween(
-            pageText: companyPageText,
-            textStart: "Indices:<dd>",
-            textEnd: "</dd>"));
-
-        return likelyIndex == "-" || likelyIndex == "n/a" ? string.Empty : likelyIndex;
-    }
-
-    /// <summary>
-    ///     Gets the currency
-    /// </summary>
-    /// <param name="pageText"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
-    public static string T2M_Currency(string pageText)
-    {
-        string currISO3 = "N/A";
-
-        // Try to figure out if it has a "currency" or else get it from Year High
-        string likelyCurrency = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Currency:",
-            textEnd: "</div>");
-        if (likelyCurrency == string.Empty)
-        {
-            string currencyInYearHigh = HelperStringUtils.FindTextBetween(
-                pageText: pageText,
-                textStart: "Year high:",
-                textEnd: "</div>");
-            if (!string.IsNullOrWhiteSpace(value: currencyInYearHigh))
-            {
-                if (currencyInYearHigh.EndsWith(value: "p"))
-                {
-                    currISO3 = "GBX";
-                }
-                else if (currencyInYearHigh.StartsWith(value: "£") ||
-                         currencyInYearHigh.StartsWith(value: "&pound;"))
-                {
-                    currISO3 = "GBP";
-                }
-                else if (currencyInYearHigh.StartsWith(value: "$"))
-                {
-                    currISO3 = "USD";
-                }
-                else if (currencyInYearHigh.StartsWith(value: "&euro;"))
-                {
-                    currISO3 = "EUR";
-                }
-                else if (currencyInYearHigh.StartsWith(value: "A$"))
-                {
-                    currISO3 = "AUD";
-                }
-                else
-                {
-                    if (currencyInYearHigh.Contains(value: "n/a"))
-                        currISO3 = "N/A";
-                    else
-                        throw new Exception(message: $"Invalid currency: {currencyInYearHigh}.");
-                }
-            }
-        }
-        else
-        {
-            currISO3 = likelyCurrency;
-        }
-
-        return currISO3;
+        return "## Not classified";
     }
 
     /// <summary>
@@ -322,22 +156,10 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Gets the latest open price. In some case that's an N/A espc when weekend so we can pull the last-close price.
     /// </summary>
-    /// <param name="pageText"></param>
+    /// <param name="openStr"></param>
     /// <returns></returns>
-    public static double T2M_Open_price(string pageText)
+    public static double T2M_Open_price(string openStr)
     {
-        string openStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Open:",
-            textEnd: "</div>");
-        if (openStr == string.Empty ||
-            openStr.ToLower() == "n/a")
-            openStr = HelperStringUtils.FindTextBetween(
-                pageText: pageText,
-                textStart: "Previous close:",
-                textEnd: "</div>");
-
-
         _ = double.TryParse(s: Regex.Replace(input: openStr, pattern: "[^. 0-9]", replacement: ""),
             result: out double openPrice);
         return openPrice;
@@ -348,12 +170,8 @@ internal static class TagsToModelValueTransformations
     /// </summary>
     /// <param name="pageText"></param>
     /// <returns></returns>
-    public static string T2M_Dividend_yield(string pageText)
+    public static string T2M_Dividend_yield(string divYieldStr)
     {
-        string divYieldStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Dividend yield:",
-            textEnd: "</div>");
 
         _ = double.TryParse(s: Regex.Replace(input: divYieldStr, pattern: "[^. 0-9]", replacement: ""),
             result: out double divYieldDbl);
@@ -367,23 +185,19 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Gets the year low
     /// </summary>
-    /// <param name="pageText"></param>
+    /// <param name="yearLowStr"></param>
     /// <param name="openVal"></param>
     /// <returns>The Min(openVal, year_low) value</returns>
-    public static double T2M_Year_low(string pageText, double openVal)
+    public static double T2M_Year_low(string yearLowStr, double openVal)
     {
-        string yearLowStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Year low:",
-            textEnd: "</div>");
         _ = double.TryParse(s: Regex.Replace(input: yearLowStr, pattern: "[^. 0-9]", replacement: ""),
-            result: out double yearLowPrice);
+           result: out double yearLowPrice);
 
         try
         {
             return Math.Min(val1: openVal, val2: yearLowPrice);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return 0;
         }
@@ -392,23 +206,19 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Gets the year high
     /// </summary>
-    /// <param name="pageText"></param>
+    /// <param name="yearHighStr"></param>
     /// <param name="openVal"></param>
     /// <returns>The Max(openVal, year_high) value</returns>
-    public static double T2M_Year_high(string pageText, double openVal)
+    public static double T2M_Year_high(string yearHighStr, double openVal)
     {
-        string yearLowStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Year high:",
-            textEnd: "</div>");
-        _ = double.TryParse(s: Regex.Replace(input: yearLowStr, pattern: "[^. 0-9]", replacement: ""),
+        _ = double.TryParse(s: Regex.Replace(input: yearHighStr, pattern: "[^. 0-9]", replacement: ""),
             result: out double yearHighPrice);
 
         try
         {
             return Math.Max(val1: openVal, val2: yearHighPrice);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return 0;
         }
@@ -421,74 +231,64 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Gets the PE Ratio
     /// </summary>
-    /// <param name="pageText"></param>
+    /// <param name="peRatioStr"></param>
     /// <param name="currSign"></param>
     /// <returns></returns>
-    public static double T2M_PE_ratio(string pageText, string currSign)
+    public static double T2M_PE_ratio(string peRatioStr, string currSign)
     {
-        string peRatioStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "P/E ratio:",
-            textEnd: "</div>");
-
         _ = double.TryParse(s: Regex.Replace(input: peRatioStr, pattern: "[^. 0-9]", replacement: ""),
             result: out double peRatio);
         return peRatio;
     }
 
     /// <summary>
-    ///     Gets the market cap. This is stored as a string w/ units (eg "million") on the website so we try to convert it to
-    ///     numbers.
+    /// Parses market cap strings (or raw numeric strings) into a double value.
+    /// Converts GBX (pence) to GBP if needed.
     /// </summary>
-    /// <param name="pageText"></param>
-    /// <param name="currISO3"></param>
-    /// <param name="currSign"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception">Warn if encountered unknown value</exception>
-    public static double T2M_Market_capitalisation(string pageText, string currISO3, string currSign)
+    public static double T2M_Market_capitalisation(string marketCapStr, string currISO3, string currSign)
     {
-        int currPowerAdd = currISO3 == "GBX" ? 2 : 0;
-        string marketCapStr = HelperStringUtils.FindTextBetween(
-                                                    pageText: pageText,
-                                                    textStart: "Market capitalisation:",
-                                                    textEnd: "</div>").Replace(oldValue: ":", newValue: "")
-                                               .Replace(oldValue: currISO3, newValue: "")
-                                               .Replace(oldValue: currSign, newValue: "")
-                                               .Trim(); // not sure why but we appear to need that replace (":") here.
-
-        _ = double.TryParse(s: Regex.Replace(input: marketCapStr, pattern: "[^. 0-9]", replacement: ""),
-            result: out double marketCap);
-        if (
-            !string.IsNullOrWhiteSpace(value: marketCapStr) &&
-            marketCapStr.ToLower() != "n/a" &&
-            marketCapStr.Length <
-            100 // some trusts can have a "Market Capitalisation" text block but it's basically wrong.
-        )
+        if (string.IsNullOrWhiteSpace(marketCapStr) ||
+            marketCapStr.Equals("n/a", StringComparison.OrdinalIgnoreCase))
         {
-            if (marketCapStr.Contains(value: "trillion") ||
-                marketCapStr.Contains(value: "tn"))
-            {
-                marketCap *= Math.Pow(x: 10, y: 12 + currPowerAdd);
-            }
-            else if (marketCapStr.Contains(value: "billion") ||
-                     marketCapStr.Contains(value: "bn"))
-            {
-                marketCap *= Math.Pow(x: 10, y: 9 + currPowerAdd);
-            }
-            else if (marketCapStr.Contains(value: "million") ||
-                     marketCapStr.Contains(value: "mn"))
-            {
-                marketCap *= Math.Pow(x: 10, y: 6 + currPowerAdd);
-            }
-            else if (marketCapStr.Contains(value: ",") ||
-                     marketCap < 1000)
-            {
-                // nothing. 
-            }
-            else
-            {
-                if (currISO3 != "N/A") throw new Exception(message: $"Error parsing marketcap - currency: {currISO3}");
-            }
+            return 0;
+        }
+
+        // Clean out currency codes, symbols, and standard noise
+        string cleanStr = marketCapStr
+            .Replace(currISO3, "", StringComparison.OrdinalIgnoreCase)
+            .Replace(currSign, "")
+            .Replace(",", "")
+            .Trim();
+
+        // Extract pure numeric part (handles decimals like 53.4)
+        string numericPart = Regex.Replace(cleanStr, @"[^0-9.]", "");
+        if (!double.TryParse(numericPart, out double marketCap))
+        {
+            return 0;
+        }
+
+        string lowerStr = cleanStr.ToLowerInvariant();
+
+        // 1. Handle textual multipliers (e.g. "53.4 million", "1.2 bn")
+        if (lowerStr.Contains("trillion") || lowerStr.Contains("tn"))
+        {
+            marketCap *= 1e12; // 1,000,000,000,000
+        }
+        else if (lowerStr.Contains("billion") || lowerStr.Contains("bn"))
+        {
+            marketCap *= 1e9; // 1,000,000,000
+        }
+        else if (lowerStr.Contains("million") || lowerStr.Contains("mn"))
+        {
+            marketCap *= 1e6; // 1,000,000
+        }
+
+        // 2. Adjust GBX (Pence) to GBP (Pounds) if currency is pence
+        if (string.Equals(currISO3, "GBX", StringComparison.OrdinalIgnoreCase))
+        {
+            // Optional: Divide by 100 if you want the market cap stored in Pounds (£) 
+            // instead of Pence.
+            // marketCap /= 100.0;
         }
 
         return marketCap;
@@ -497,18 +297,13 @@ internal static class TagsToModelValueTransformations
     /// <summary>
     ///     Gets the Volume
     /// </summary>
-    /// <param name="pageText"></param>
+    /// <param name="volumeStr"></param>
     /// <returns></returns>
-    public static double T2M_Volume(string pageText)
+    public static double T2M_Volume(string volumeStr)
     {
-        string openStr = HelperStringUtils.FindTextBetween(
-            pageText: pageText,
-            textStart: "Volume:",
-            textEnd: "</div>");
-
-        _ = double.TryParse(s: Regex.Replace(input: openStr, pattern: "[^. 0-9]", replacement: ""),
-            result: out double openPrice);
-        return openPrice;
+        _ = double.TryParse(s: Regex.Replace(input: volumeStr, pattern: "[^. 0-9]", replacement: ""),
+            result: out double volume);
+        return volume;
     }
 
     /// <summary>

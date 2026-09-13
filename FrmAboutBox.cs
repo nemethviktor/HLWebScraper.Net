@@ -70,7 +70,7 @@ internal partial class FrmAboutBox : Form
 
     private void AppendText(RichTextBox box,
         string text,
-        string link = null)
+        string? link = null)
     {
         box.AppendText(text: text + " " + link + Environment.NewLine);
     }
@@ -114,7 +114,7 @@ internal partial class FrmAboutBox : Form
             }
 
             return Path.GetFileNameWithoutExtension(path: Assembly.GetExecutingAssembly()
-                                                                  .CodeBase);
+                                                                  .Location);
         }
     }
 

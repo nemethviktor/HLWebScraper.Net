@@ -1,5 +1,14 @@
 # HLWebscraper.Net Changelog
 
+**Build 9752 [20260913]** 
+- NEW & UPDATED:
+  - Updated to work with current HL Website
+  - Added `Select All/None` buttons
+  - Some packages updated
+  - Removed obsolete/dead fields (`Country`, `Exchange`, `Indicies`)
+- BUGS & FIXES:
+  - N/A
+
 **Build 9456 [20251121]** 
 - NEW & UPDATED:
   - Updated packages
@@ -34,7 +43,6 @@
   - Added an ETF-only filter
   - Added an example (small) output
   - Added changlog.md and patched readme.md a bit
-
 - BUGS & FIXES:
   - Changed the HttpClient call process to split calls into chunks of (2x) 50s. 
 	- HttpClient can be forced to close connections but it's apparently misbehaving and I'm not skilled quite enough to build a factory.
@@ -46,6 +54,5 @@
 **Build 8838 [20240313] [Unreleased]** 
 - NEW & UPDATED:
   - Initial commit. Minor imperfections as one'd expect.
-
 - BUGS & FIXES:
   - N/A

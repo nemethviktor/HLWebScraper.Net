@@ -113,6 +113,7 @@
             AcceptButton = btn_OK;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            CancelButton = btn_OK;
             ClientSize = new Size(670, 327);
             Controls.Add(tableLayoutPanel);
             FormBorderStyle = FormBorderStyle.FixedDialog;

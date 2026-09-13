@@ -17,24 +17,24 @@
  * Changes by Viktor Nemeth
  *  - added Clear();
  *  - added ContainsKey(item);
- *  - applied code cleanup (via Resharper)
+ *  - update to handle dict output and T
 **/
 
 using System.Collections.Specialized;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 
 namespace HLWebScraper.Net.Model;
 
-public class CompressedMemoryCache
+public class CompressedMemoryCache<T>
 {
     private readonly object _sync = new();
-    private readonly Dictionary<string, byte[]> cacheDic = new();
-    private readonly OrderedDictionary itemPriorityDic = new();
+    private readonly Dictionary<string, byte[]> cacheDic = [];
+    private readonly OrderedDictionary itemPriorityDic = [];
 
     public int MaxItemsToHold { get; set; }
     public int MaxBytesSizeLimit { get; set; }
-
     private int BytesSize { get; set; }
 
     public int Count
@@ -52,7 +52,7 @@ public class CompressedMemoryCache
     {
         lock (_sync)
         {
-            return cacheDic.ContainsKey(key: key);
+            return cacheDic.ContainsKey(key);
         }
     }
 
@@ -65,101 +65,91 @@ public class CompressedMemoryCache
         }
     }
 
-    public void AddOrUpdate(string key, string value)
+    public void AddOrUpdate(string key, T value)
     {
         lock (_sync)
         {
-            byte[] compressed = Compress(data: value);
+            // Serialize object T to JSON string before compression
+            string jsonString = JsonSerializer.Serialize(value);
+            byte[] compressed = Compress(jsonString);
 
-            if (itemPriorityDic.Contains(key: key))
+            if (itemPriorityDic.Contains(key))
             {
-                int lastbytes = cacheDic[key: key].Length;
+                int lastbytes = cacheDic[key].Length;
                 BytesSize += compressed.Length - lastbytes;
-                itemPriorityDic[key: key] = compressed;
-                RePriorityItem(key: key);
+                cacheDic[key] = compressed;
+                RePriorityItem(key);
             }
             else
             {
-                itemPriorityDic.Add(key: key, value: key);
-                if (MaxItemsToHold != 0 &&
-                    cacheDic.Count >= MaxItemsToHold &&
-                    itemPriorityDic.Count > 0) RemoveLowerPriorityItem();
+                itemPriorityDic.Add(key, key);
+                if (MaxItemsToHold != 0 && cacheDic.Count >= MaxItemsToHold && itemPriorityDic.Count > 0)
+                {
+                    RemoveLowerPriorityItem();
+                }
 
                 BytesSize += compressed.Length;
-                cacheDic.Add(key: key, value: compressed);
+                cacheDic.Add(key, compressed);
 
-                while (MaxBytesSizeLimit > 0 &&
-                       BytesSize > MaxBytesSizeLimit)
+                while (MaxBytesSizeLimit > 0 && BytesSize > MaxBytesSizeLimit)
                 {
                     RemoveLowerPriorityItem();
                     if (cacheDic.Count == 0)
-                        throw new Exception(message: "The value size is higher that the MaxBytesSizeLimit: " +
-                                                     MaxBytesSizeLimit);
+                        throw new Exception("The value size is higher than the MaxBytesSizeLimit: " + MaxBytesSizeLimit);
                 }
             }
+        }
+    }
+
+    public T? Get(string key)
+    {
+        lock (_sync)
+        {
+            if (cacheDic.TryGetValue(key, out byte[]? compressedBytes))
+            {
+                RePriorityItem(key);
+                string jsonString = Decompress(compressedBytes);
+                return JsonSerializer.Deserialize<T>(jsonString);
+            }
+
+            return default;
         }
     }
 
     private void RemoveLowerPriorityItem()
     {
-        object kremove = itemPriorityDic[index: 0];
-        int sizeremoved = cacheDic[key: kremove.ToString()].Length;
-        itemPriorityDic.RemoveAt(index: 0);
-        cacheDic.Remove(key: kremove.ToString());
+        object? kremove = itemPriorityDic[0];
+        if (kremove == null) return;
+
+        string keyStr = kremove.ToString()!;
+        int sizeremoved = cacheDic[keyStr].Length;
+        itemPriorityDic.RemoveAt(0);
+        cacheDic.Remove(keyStr);
         BytesSize -= sizeremoved;
     }
 
     private void RePriorityItem(string key)
     {
-        //Move the key to the end of queue
-        itemPriorityDic.Remove(key: key);
-        itemPriorityDic.Add(key: key, value: key);
+        itemPriorityDic.Remove(key);
+        itemPriorityDic.Add(key, key);
     }
 
-    public string Get(string key)
+    private static byte[] Compress(string data)
     {
-        lock (_sync)
+        using MemoryStream inMemStream = new(Encoding.UTF8.GetBytes(data));
+        using MemoryStream outMemStream = new();
+        using (DeflateStream zipStream = new(outMemStream, CompressionMode.Compress, leaveOpen: true))
         {
-            if (cacheDic.ContainsKey(key: key))
-            {
-                RePriorityItem(key: key);
-                return Decompress(data: cacheDic[key: key]);
-            }
-
-            return null;
+            inMemStream.CopyTo(zipStream);
         }
+        return outMemStream.ToArray();
     }
 
-    private byte[] Compress(string data)
+    private static string Decompress(byte[] data)
     {
-        // convert the source string into a memory stream
-        using (MemoryStream inMemStream = new(buffer: Encoding.UTF8.GetBytes(s: data)), outMemStream = new())
-        {
-            // create a compression stream with the output stream
-            using (DeflateStream zipStream = new(stream: outMemStream, mode: CompressionMode.Compress, leaveOpen: true))
-                // copy the source string into the compression stream
-            {
-                inMemStream.WriteTo(stream: zipStream);
-            }
-
-            // return the compressed bytes in the output stream
-            return outMemStream.ToArray();
-        }
-    }
-
-    private string Decompress(byte[] data)
-    {
-        // load the byte array into a memory stream
-        using (MemoryStream inMemStream = new(buffer: data))
-            // and decompress the memory stream into the original string
-        {
-            using (DeflateStream decompressionStream = new(stream: inMemStream, mode: CompressionMode.Decompress))
-            {
-                using (StreamReader streamReader = new(stream: decompressionStream, encoding: Encoding.UTF8))
-                {
-                    return streamReader.ReadToEnd();
-                }
-            }
-        }
+        using MemoryStream inMemStream = new(data);
+        using DeflateStream decompressionStream = new(inMemStream, CompressionMode.Decompress);
+        using StreamReader streamReader = new(decompressionStream, Encoding.UTF8);
+        return streamReader.ReadToEnd();
     }
 }
