@@ -90,8 +90,8 @@ public partial class FrmMainApp : Form
                                             !ckb_ISAOnlySearch.Checked) &&
                                            ((sedol.ETF_Type != Not_ETF_ETFType && ckb_ETFOnlySearch.Checked) ||
                                             !ckb_ETFOnlySearch.Checked) &&
-                                           (sedol.Name.ToLower().Contains(value: filter.ToLower()) ||
-                                            string.IsNullOrWhiteSpace(value: filter)))
+                                           (string.IsNullOrWhiteSpace(value: filter) ||
+                                            sedol.Name.Contains(value: filter, comparisonType: StringComparison.OrdinalIgnoreCase)))
                                       .ToList();
 
         // Create a BindingSource
@@ -190,47 +190,36 @@ public partial class FrmMainApp : Form
             $"{logMessageVal} - please note that it can appear that the app goes quiet here/at the beginning of any/each block, it shouldn't actually be dead so be patient.",
             logMessageType: LogMessageTypes.Start);
 
-        int totalUrls = UrlListOfStocksAndShares.Count;
-
         foreach (char alphabetChar in selectedAlphabet)
         {
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Parsing block: " + alphabetChar,
                 logMessageType: LogMessageTypes.None);
-            bool timeOutBool = false;
-            string respString = string.Empty;
+            string respString;
 
-            while (!timeOutBool)
+            try
             {
-                try
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string url = "https://www.hl.co.uk/shares/shares-search-results/" + alphabetChar;
+                HttpResponseMessage response =
+                    await HttpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                respString = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                if (ex is OperationCanceledException or TaskCanceledException)
                 {
-                    // Check if cancellation has been requested
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    string url = "https://www.hl.co.uk/shares/shares-search-results/" + alphabetChar;
-                    HttpResponseMessage response =
-                        await HttpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-                    response.EnsureSuccessStatusCode();
-
-                    respString = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
-                    timeOutBool = true;
-                }
-                catch (Exception ex)
-                {
-                    if (ex is OperationCanceledException or
-                        TaskCanceledException)
-                    {
-                        // Operation was cancelled
-                        AppendLogWindowText(tbx: formInstance.tbx_Log,
-                            appendText: "Parsing of alphabetical blocks was cancelled. Process halted.",
-                            logMessageType: LogMessageTypes.Info);
-                        return;
-                    }
-
-
-                    AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: ex.Message,
-                        logMessageType: LogMessageTypes.Error);
+                    AppendLogWindowText(tbx: formInstance.tbx_Log,
+                        appendText: "Parsing of alphabetical blocks was cancelled. Process halted.",
+                        logMessageType: LogMessageTypes.Info);
                     return;
                 }
+
+                AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: ex.Message,
+                    logMessageType: LogMessageTypes.Error);
+                return;
             }
 
             HtmlDocument doc = new();
@@ -280,98 +269,60 @@ public partial class FrmMainApp : Form
     {
         try
         {
-            // Start scraping all items
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
                 logMessageType: LogMessageTypes.Start);
 
-            // Chunk size for processing tasks
-            int chunkSize = _maxConnectionsPerServerSetting;
-
-            // Create a list to hold the tasks
-            List<Task> tasks = [];
-
-            // Iterate over the URLs in chunks
-            for (int i = 0; i < urls.Count; i += chunkSize)
+            // Each URL results in 2 requests (page + company info), hence the 2x. A sliding window of
+            // requests (rather than fixed chunks) means one slow response doesn't stall the whole batch.
+            // Runs on the thread pool, so HTML parsing/compression stays off the UI thread.
+            ParallelOptions options = new()
             {
-                // Get the chunk of URLs
-                IEnumerable<string> chunk = urls.Skip(count: i).Take(count: chunkSize);
+                MaxDegreeOfParallelism = Math.Max(1, _maxConnectionsPerServerSetting * 2),
+                CancellationToken = cancellationToken
+            };
 
-                // Create a list to hold the tasks for this chunk
-                List<Task> chunkTasks = [];
+            await Parallel.ForEachAsync(
+                source: urls.SelectMany(url => new[] { url, url + "/company-information" }),
+                parallelOptions: options,
+                body: async (url, ct) => await GetHtmlAsync(url: url, formInstance: formInstance, cancellationToken: ct));
 
-                // Create a new HttpClient for this chunk
-                using HttpClient httpClient = new();
-
-                // Loop through each URL in the chunk and start scraping
-                foreach (string url in chunk)
-                {
-                    // Check if cancellation has been requested
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    // Construct the URL with "/company-information" appended
-                    string companyInfoUrl = url + "/company-information";
-
-                    // Add tasks to scrape the main URL and company info URL
-                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: url,
-                        formInstance: formInstance, cancellationToken: cancellationToken));
-                    chunkTasks.Add(item: GetHtmlAsyncWithClient(httpClient: httpClient, url: companyInfoUrl,
-                        formInstance: formInstance, cancellationToken: cancellationToken));
-                }
-
-                // Add chunk tasks to the main tasks list
-                tasks.AddRange(collection: chunkTasks);
-
-                // Wait for the chunk tasks to complete or cancellation requested
-                await Task.WhenAll(tasks: chunkTasks);
-
-                // Dispose of the HttpClient to close connections and release resources
-                httpClient.Dispose();
-
-                // Break loop if cancellation requested
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-            }
-
-            // Scraping completed
             AppendLogWindowText(tbx: formInstance.tbx_Log, appendText: "Scraping all items.",
                 logMessageType: LogMessageTypes.Done);
         }
         catch (Exception ex) when (ex is OperationCanceledException or TaskCanceledException)
         {
-            // Tasks were cancelled
             AppendLogWindowText(tbx: formInstance.tbx_Log,
                 appendText: "Scraping of web pages was cancelled. Process halted.",
                 logMessageType: LogMessageTypes.Info);
         }
     }
 
-    private static async Task GetHtmlAsyncWithClient(HttpClient httpClient, string url, FrmMainApp formInstance,
-        CancellationToken cancellationToken)
+    private static async Task GetHtmlAsync(string url, FrmMainApp formInstance, CancellationToken cancellationToken)
     {
-        // Check if cancellation has been requested
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Make the HTTP request
-        HttpResponseMessage response = await httpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
-        string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
-
-        // Process the HTML content
-        // Page
-        if (!url.Contains(value: "company-info"))
+        try
         {
-            urlAndHtmlContentHashtable.AddOrUpdate(key: url,
-                value: HlPageParser.ReturnPageText(htmlContent: htmlContent));
-        }
-        // Company
-        else
-        {
-            urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
-                value: HlPageParser.ReturnCompanyPageText(htmlContent: htmlContent));
-        }
+            HttpResponseMessage response = await HttpClient.GetAsync(requestUri: url, cancellationToken: cancellationToken);
+            string htmlContent = await response.Content.ReadAsStringAsync(cancellationToken: cancellationToken);
 
-        IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
+            if (!url.Contains(value: "company-info"))
+            {
+                urlAndHtmlContentHashtable.AddOrUpdate(key: url,
+                    value: HlPageParser.ReturnPageText(htmlContent: htmlContent));
+            }
+            else
+            {
+                urlAndCompanyInfoHashtable.AddOrUpdate(key: url,
+                    value: HlPageParser.ReturnCompanyPageText(htmlContent: htmlContent));
+            }
+
+            IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: true);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // one bad page shouldn't take down the whole scrape; CreateSEDOL skips items with missing data
+            IncrementCounterAndLogProgress(url: url, formInstance: formInstance, isSuccess: false,
+                errorMsg: ex.Message);
+        }
     }
 
     /// <summary>
@@ -418,7 +369,7 @@ public partial class FrmMainApp : Form
 
                 double openVal = TagsToModelValueTransformations.T2M_Open_price(openStr: dataInContentHashtable["OpenPrice"] ?? string.Empty);
                 double yearLow = TagsToModelValueTransformations.T2M_Year_low(yearLowStr: dataInContentHashtable["YearLow"] ?? string.Empty, openVal: openVal);
-                double yearHigh = TagsToModelValueTransformations.T2M_Year_high(yearHighStr: dataInContentHashtable["YearLow"] ?? string.Empty, openVal: openVal);
+                double yearHigh = TagsToModelValueTransformations.T2M_Year_high(yearHighStr: dataInContentHashtable["YearHigh"] ?? string.Empty, openVal: openVal);
                 double volume = TagsToModelValueTransformations.T2M_Volume(volumeStr: dataInContentHashtable["VolumeTraded"] ?? string.Empty);
                 double marketCap = TagsToModelValueTransformations.T2M_Market_capitalisation(marketCapStr: dataInContentHashtable["MarketCap"] ?? string.Empty, currISO3: currISO3, currSign: currSign);
 
@@ -966,24 +917,9 @@ public partial class FrmMainApp : Form
                 buttons: MessageBoxButtons.YesNoCancel, icon: MessageBoxIcon.Question);
         }
 
-        List<SEDOL> sedolList = [];
-        if (dialogResult == DialogResult.Yes)
-        {
-            foreach (object item in cbx_Securities.Items)
-            {
-                if (item is SEDOL selectedSEDOL)
-                {
-                    sedolList.Add(item: selectedSEDOL);
-                }
-            }
-        }
-        else if (dialogResult == DialogResult.No)
-        {
-            foreach (SEDOL sedol in SEDOLs)
-            {
-                sedolList.Add(item: sedol);
-            }
-        }
+        List<SEDOL> sedolList = dialogResult == DialogResult.Yes
+            ? cbx_Securities.Items.OfType<SEDOL>().ToList()
+            : dialogResult == DialogResult.No ? [.. SEDOLs] : [];
 
         if (dialogResult != DialogResult.Cancel)
         {
@@ -994,9 +930,7 @@ public partial class FrmMainApp : Form
                 using CsvWriter csv = new(writer: writer, culture: CultureInfo.InvariantCulture);
                 csv.WriteHeader<SEDOL>();
                 csv.NextRecord();
-                foreach (SEDOL record in SEDOLs.Where(predicate: record =>
-                             (dialogResult == DialogResult.Yes && sedolList.Contains(item: record)) ||
-                             dialogResult == DialogResult.No))
+                foreach (SEDOL record in sedolList)
                 {
                     csv.WriteRecord(record: record);
                     csv.NextRecord();
