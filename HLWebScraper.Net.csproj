@@ -12,6 +12,9 @@
 	 <RuntimeIdentifier>win-x64</RuntimeIdentifier>    
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   <ApplicationManifest>app.manifest</ApplicationManifest>
+  <PublishSingleFile>true</PublishSingleFile>
+  <SelfContained>false</SelfContained>
+  <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 
   </PropertyGroup>
 
@@ -80,5 +83,9 @@
     </None>
    
   </ItemGroup>
+  <!-- Produce a single-file exe on every build (no separate publish step). Output: $(OutDir)single\ -->
+  <Target Name="SingleFileAfterBuild" AfterTargets="Build" Condition="'$(_IsPublishing)' != 'true' and '$(SingleFileInner)' != 'true'">
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="NoBuild=true;SingleFileInner=true;PublishDir=$(OutDir)single\" />
+  </Target>
 
 </Project>

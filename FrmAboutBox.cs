@@ -113,8 +113,9 @@ internal partial class FrmAboutBox : Form
                 }
             }
 
-            return Path.GetFileNameWithoutExtension(path: Assembly.GetExecutingAssembly()
-                                                                  .Location);
+            return Assembly.GetExecutingAssembly()
+                           .GetName()
+                           .Name ?? string.Empty;
         }
     }
 
