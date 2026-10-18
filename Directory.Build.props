@@ -1,0 +1,10 @@
+<Project>
+  <!-- Build output lives outside the repo: the repo is synced to Google Drive, and the sync client
+       locks obj\ subfolders mid-build and re-syncs every rebuild. -->
+  <PropertyGroup Condition="'$(LOCALAPPDATA)' != ''">
+    <BuildRoot>$(LOCALAPPDATA)\build\HLWebScraper.Net\</BuildRoot>
+    <BaseIntermediateOutputPath>$(BuildRoot)obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(BuildRoot)bin\</BaseOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>
