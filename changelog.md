@@ -1,5 +1,16 @@
 # HLWebscraper.Net Changelog
 
+**Build 9794 [20261025]** 
+- NEW & UPDATED:
+  - Faster scraping: replaced the fixed-size batches with a sliding window of requests so one slow response no longer stalls the whole batch
+  - Page parsing now runs off the UI thread
+  - The build now also produces a single-file exe (`single` folder in the output)
+  - Minor export/search performance tweaks and code tidy-up; removed an unused package
+- BUGS & FIXES:
+  - `Year high` was being populated with the Year low value, now fixed
+  - A failed page request is now logged and skipped instead of aborting the scrape
+  - About box no longer relies on `Assembly.Location` (incompatible with single-file apps)
+
 **Build 9752 [20260913]** 
 - NEW & UPDATED:
   - Updated to work with current HL Website
