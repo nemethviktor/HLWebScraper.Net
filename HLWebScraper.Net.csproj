@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -36,6 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autoupdater.NET.Official" Version="1.9.3" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.13.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
@@ -86,6 +87,29 @@
   <!-- Produce a single-file exe on every build (no separate publish step). Output: $(OutDir)single\ -->
   <Target Name="SingleFileAfterBuild" AfterTargets="Build" Condition="'$(_IsPublishing)' != 'true' and '$(SingleFileInner)' != 'true'">
     <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="NoBuild=true;SingleFileInner=true;PublishDir=$(OutDir)single\" />
+  </Target>
+
+  <!-- Zip the single-file output as HLWebScraper.Net_b[build].zip (the format the in-app updater downloads from GitHub releases).
+       The build number is the assembly's own (days since 2000-01-01), read back from the compiled dll. Output: $(OutDir)zip\ -->
+  <Target Name="ZipAfterSingleFile" AfterTargets="SingleFileAfterBuild" Condition="'$(_IsPublishing)' != 'true' and '$(SingleFileInner)' != 'true'">
+    <GetAssemblyIdentity AssemblyFiles="@(IntermediateAssembly->'%(FullPath)')">
+      <Output TaskParameter="Assemblies" ItemName="BuiltAssemblyIdentity" />
+    </GetAssemblyIdentity>
+    <PropertyGroup>
+      <BuiltBuildNumber>$([System.Version]::Parse('%(BuiltAssemblyIdentity.Version)').Build)</BuiltBuildNumber>
+      <ReleaseZipPath>$(OutDir)zip\HLWebScraper.Net_b$(BuiltBuildNumber).zip</ReleaseZipPath>
+    </PropertyGroup>
+    <!-- stage only what users need: no pdb, WebView2 xml docs or example output -->
+    <ItemGroup>
+      <ReleaseZipFile Include="$(OutDir)single\HLWebScraper.Net.exe;$(OutDir)single\readme.md;$(OutDir)single\changelog.md" />
+      <ReleaseZipFile Include="$(OutDir)single\Resources\ETF_Types_example.csv" TargetSubDir="Resources\" />
+    </ItemGroup>
+    <RemoveDir Directories="$(OutDir)zipstage\" />
+    <MakeDir Directories="$(OutDir)zip\" />
+    <Copy SourceFiles="@(ReleaseZipFile)" DestinationFolder="$(OutDir)zipstage\%(ReleaseZipFile.TargetSubDir)" />
+    <Delete Files="$(ReleaseZipPath)" />
+    <ZipDirectory SourceDirectory="$(OutDir)zipstage\" DestinationFile="$(ReleaseZipPath)" />
+    <Message Importance="high" Text="Release zip: $(ReleaseZipPath)" />
   </Target>
 
 </Project>

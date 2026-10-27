@@ -1,5 +1,12 @@
 # HLWebscraper.Net Changelog
 
+**Next release [not yet built, no date]**
+- NEW & UPDATED:
+  - Auto-update: the app checks GitHub releases at startup (at most once a week) and offers to download and apply a newer version
+  - The build now also produces a release zip (`HLWebScraper.Net_b[build].zip`, in the `zip` folder of the output) containing just the exe, readme, changelog and `ETF_Types_example.csv`
+- BUGS & FIXES:
+  - N/A
+
 **Build 9794 [20261025]** 
 - NEW & UPDATED:
   - Faster scraping: replaced the fixed-size batches with a sliding window of requests so one slow response no longer stalls the whole batch

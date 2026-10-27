@@ -37,7 +37,7 @@ On that note the app can only collect stuff that's either visibly available on t
 
 ### Performance
 
-- The data pull is around 4.5GB (cca 22,800 pages at the time of initial publication) but the code is making a rather conscious effort at not hammering the server too much so we're only pulling relatively small batches in loops.
+- The data pull is around 4.5GB (cca 22,800 pages at the time of initial publication) but the code is making a rather conscious effort at not hammering the server too much so requests go out through a throttled sliding window (see `MaxConnectionsPerServer` below) rather than all at once.
 - The end-to-end process (assuming favourable conditions) takes around 30-45 mins.
 - The app uses a library (`CompressedMemoryCache.cs`) - the licence of that is contained in the file and was built by Gustavo Augusto Hennig (it's APACHE 2.0 btw)
     - It's necessary to use compression on the html pages because storing that many (read: tens of thousands) pages at 200-400kbytes each will eat up memory in no time. My initial tests of letters A-C made the app consume around 5GB RAM w/o compression and sub-1GB w/ compression.
@@ -46,7 +46,16 @@ On that note the app can only collect stuff that's either visibly available on t
 
 ## Download & Install (Windows 10+ only)
 
-There's no installation file per se. Unzip and run the exe.
+There's no installation file per se. Download the latest `HLWebScraper.Net_b[build].zip` from the [Releases](https://github.com/nemethviktor/HLWebScraper.Net/releases) page, unzip it somewhere you have write access to (the app replaces its own files when updating) and run `HLWebScraper.Net.exe`.
+
+### Updates
+
+_Planned for the next release (no date yet) - builds up to and including 9794 don't have this and need to be updated manually once._
+
+- The app checks GitHub for a newer release at startup, at most once a week. If there's one you'll be asked whether you want to update; saying yes downloads the zip, replaces the app's files and restarts the app. Nothing is downloaded without your say-so, and if the check fails (e.g. you're offline) it's silently skipped.
+- The "build" number (shown in the About box) is the number of days since 1 January 2000 on the day the app was compiled. Releases are tagged `b[build]` on GitHub and that's what the update check compares.
+- Your own `ETF_Types.csv` and your settings are not touched by an update. `ETF_Types_example.csv` is overwritten, which is why you should keep your changes in `ETF_Types.csv` (see below).
+- If you'd rather not use the auto-update, you can always download and unzip a new release manually.
 
 ## Things to Note, Usage
 
@@ -80,7 +89,7 @@ There's no installation file per se. Unzip and run the exe.
     - I didn't really bother bringing in external libraries for parsing or making the code particularly neat. I had a look at HTMLAgility but in reality fishing around XPath is a pain in the backside when I already have my somewhat loop-ing code from VBA cast to C# by GPT.
     - The version number is seemingly odd: we start with v4 because the previous ones were my own VBA stuff
 - There's some semblance of a Dark Mode option. WinForms doesn't actually support DM natively and can't replicate it like-for-like so it's as good as it gets for now.
-- Settings are stored in a SQLite file in your Roaming folder. If you're having timeout issues or rate limiting, change the MaxConnectionsPerServer in there to something lower (and pref don't set it above 50 in any case, which is the default).
+- Settings (including the date of the last update check) are stored in a SQLite file in your Roaming folder. If you're having timeout issues or rate limiting, change the MaxConnectionsPerServer in there to something lower (and pref don't set it above 50 in any case, which is the default).
 
 ## Pull Requests
 

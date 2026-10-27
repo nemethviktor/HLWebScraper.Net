@@ -74,6 +74,8 @@ public partial class FrmMainApp : Form
             lbx_Alphabet.SetSelected(index: i, value: true);
         }
 #endif
+
+        HelperAutoUpdater.LaunchAutoUpdater();
     }
 
     #region Overview Tab
